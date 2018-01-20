@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("FastText.NetWrapper")]
+[assembly: AssemblyTitle("TestUtil")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("FastText.NetWrapper")]
+[assembly: AssemblyProduct("TestUtil")]
 [assembly: AssemblyCopyright("Copyright ©  2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("188e4cdc-832a-4d5e-8e18-d8b9b4d6ba1c")]
+[assembly: Guid("4530c4c1-77dc-44db-8199-3b0bae6e4656")]
 
 // Version information for an assembly consists of the following four values:
 //

@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{188E4CDC-832A-4D5E-8E18-D8B9B4D6BA1C}</ProjectGuid>
+    <ProjectGuid>{E9BCD9F6-D9D9-4F12-B440-6B65585106B0}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>FastText.NetWrapper</RootNamespace>
@@ -40,11 +40,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FastText.cs" />
+    <Compile Include="FastTextWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="lib\FastText.dll">
+    <Content Include="..\lib\FastText.dll">
+      <Link>FastText.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
