@@ -11,7 +11,7 @@ namespace FastText.NetWrapper
         private static readonly object _resourceLocker = new object();
         private static bool _libLoaded = false;
 
-        public static void LoadNativeLibrary()
+        private static void LoadNativeLibrary()
         {
             if (_libLoaded)
             {

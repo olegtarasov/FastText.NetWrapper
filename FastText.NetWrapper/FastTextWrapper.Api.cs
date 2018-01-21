@@ -26,7 +26,7 @@ namespace FastText.NetWrapper
         private static extern void DestroyFastText(IntPtr hPtr);
 
         [DllImport(FastTextDll, CharSet = CharSet.Ansi)]
-        private static extern void TrainSupervised(IntPtr hPtr, string input, string output, TrainingArgsStruct args);
+        private static extern void TrainSupervised(IntPtr hPtr, string input, string output, TrainingArgsStruct args, string labelPrefix);
 
         [DllImport(FastTextDll, CharSet = CharSet.Ansi)]
         private static extern void LoadModel(IntPtr hPtr, string path);

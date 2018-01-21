@@ -37,6 +37,15 @@ namespace FastText.NetWrapper
         /// </summary>
         public int Verbose { get; set; } = 0;
 
+        /// <summary>
+        /// Labels prefix [__label__].
+        /// </summary>
+        public string LabelPrefix { get; set; }
+
+        /// <summary>
+        /// Creates a new instance with default arguments for supervised training.
+        /// </summary>
+        /// <param name="builder">An optional action to change some params.</param>
         public static TrainingArgs SupervisedDefaults(Action<TrainingArgs> builder = null)
         {
             var result = new TrainingArgs
