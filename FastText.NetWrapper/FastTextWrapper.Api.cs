@@ -19,22 +19,22 @@ namespace FastText.NetWrapper
             public int Verbose;
         }
 
-        [DllImport(FastTextDll)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr CreateFastText();
 
-        [DllImport(FastTextDll)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern void DestroyFastText(IntPtr hPtr);
 
-        [DllImport(FastTextDll, CharSet = CharSet.Ansi)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern void TrainSupervised(IntPtr hPtr, string input, string output, TrainingArgsStruct args, string labelPrefix);
 
-        [DllImport(FastTextDll, CharSet = CharSet.Ansi)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern void LoadModel(IntPtr hPtr, string path);
         
-        [DllImport(FastTextDll)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern int GetMaxLabelLenght(IntPtr hPtr);
         
-        [DllImport(FastTextDll, CharSet = CharSet.Ansi)]
-        private static extern float PredictSingle(IntPtr hPtr, string input, StringBuilder predicted);
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static extern float PredictSingle(IntPtr hPtr, byte[] input, StringBuilder predicted);
     }
 }

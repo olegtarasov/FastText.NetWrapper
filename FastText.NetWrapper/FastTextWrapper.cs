@@ -14,6 +14,7 @@ namespace FastText.NetWrapper
     public partial class FastTextWrapper : IDisposable
     {
         private static readonly ILog _log = LogManager.GetLogger(typeof(FastTextWrapper));
+        private static readonly Encoding _utf8 = Encoding.UTF8;
         
         private IntPtr _fastText;
         private int _maxLabelLen;
@@ -50,7 +51,7 @@ namespace FastText.NetWrapper
             }
 
             var builder = new StringBuilder(_maxLabelLen + 1);
-            float prob = PredictSingle(_fastText, text, builder);
+            float prob = PredictSingle(_fastText, _utf8.GetBytes(text), builder);
 
             return new Prediction(prob, builder.ToString());
         }
