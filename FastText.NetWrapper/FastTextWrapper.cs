@@ -51,8 +51,9 @@ namespace FastText.NetWrapper
             }
 
             var builder = new StringBuilder(_maxLabelLen + 1);
-            float prob = PredictSingle(_fastText, _utf8.GetBytes(text), builder);
-
+            float intensity = PredictSingle(_fastText, _utf8.GetBytes(text), builder);
+            float prob = Convert.ToSingle(Math.Exp(intensity));
+            
             return new Prediction(prob, builder.ToString());
         }
 
