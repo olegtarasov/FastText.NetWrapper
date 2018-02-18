@@ -43,17 +43,52 @@ namespace FastText.NetWrapper
         /// </summary>
         /// <param name="text">Text to predict a label from.</param>
         /// <returns>Single prediction.</returns>
-        public Prediction PredictSingle(string text)
+        public unsafe Prediction PredictSingle(string text)
         {
             if (_maxLabelLen == 0)
             {
                 throw new InvalidOperationException("Model not loaded!");
             }
 
-            var builder = new StringBuilder(_maxLabelLen + 1);
-            float prob = PredictSingle(_fastText, _utf8.GetBytes(text), builder);
+            IntPtr labelPtr;
+            float prob = PredictSingle(_fastText, _utf8.GetBytes(text), new IntPtr(&labelPtr));
+            
+            // TODO: We are assuming ASCII strings, but they are UTF-8
+            string label = Marshal.PtrToStringAnsi(labelPtr);
+            DestroyString(labelPtr);
 
-            return new Prediction(prob, builder.ToString());
+            return new Prediction(prob, label);
+        }
+
+        /// <summary>
+        /// Predicts multiple labels from input text.
+        /// </summary>
+        /// <param name="text">Text to predict labels from.</param>
+        /// <param name="number">Number of labels to predict.</param>
+        /// <returns>Multiple predictions.</returns>
+        public unsafe Prediction[] PredictMultiple(string text, int number)
+        {
+            if (_maxLabelLen == 0)
+            {
+                throw new InvalidOperationException("Model not loaded!");
+            }
+
+            var probs = new float[number];
+            IntPtr labelsPtr;
+            
+            int cnt = PredictMultiple(_fastText, _utf8.GetBytes(text), new IntPtr(&labelsPtr), probs, number);
+            var result = new Prediction[cnt];
+
+            for (int i = 0; i < cnt; i++)
+            {
+                var ptr = Marshal.ReadIntPtr(labelsPtr, i * IntPtr.Size);
+                string label = Marshal.PtrToStringAnsi(ptr);
+                result[i] = new Prediction(probs[i], label);
+            }
+
+            DestroyStrings(labelsPtr, cnt);
+
+            return result;
         }
 
         /// <summary>

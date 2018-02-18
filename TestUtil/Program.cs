@@ -13,16 +13,18 @@ namespace TestUtil
         {
             var fastText = new FastTextWrapper();
 
-            fastText.Train(@"C:\_Models\botTest.txt", @"C:\_Models\botModel", TrainingArgs.SupervisedDefaults(x =>
-            {
-                x.Epochs = 25;
-                x.LearningRate = 1.0;
-                x.WordNGrams = 3;
-                x.Verbose = 2;
-            }));
+            //fastText.Train(@"C:\_Models\ehd_ft.txt", @"C:\_Models\ehd", TrainingArgs.SupervisedDefaults(x =>
+            //{
+            //    x.Epochs = 25;
+            //    x.LearningRate = 1.0;
+            //    x.WordNGrams = 3;
+            //    x.Verbose = 2;
+            //    x.LabelPrefix = "__label__";
+            //}));
 
-            //fastText.LoadModel(@"C:\_Models\fasttext.bin");
-            var prediction = fastText.PredictSingle("отключить услуга гудок");
+            fastText.LoadModel(@"C:\_Models\ehd.bin");
+            var prediction = fastText.PredictSingle("не работает монитор");
+            var predictions = fastText.PredictMultiple("не работает монитор", 4);
         }
     }
 }

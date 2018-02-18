@@ -25,6 +25,12 @@ namespace FastText.NetWrapper
         [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern void DestroyFastText(IntPtr hPtr);
 
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void DestroyString(IntPtr str);
+
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void DestroyStrings(IntPtr strings, int cnt);
+
         [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern void TrainSupervised(IntPtr hPtr, string input, string output, TrainingArgsStruct args, string labelPrefix);
 
@@ -35,6 +41,9 @@ namespace FastText.NetWrapper
         private static extern int GetMaxLabelLenght(IntPtr hPtr);
         
         [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern float PredictSingle(IntPtr hPtr, byte[] input, StringBuilder predicted);
+        private static extern float PredictSingle(IntPtr hPtr, byte[] input, IntPtr predicted);
+
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static extern int PredictMultiple(IntPtr hPtr, byte[] input, IntPtr predictedLabels, float[] predictedProbabilities, int n);
     }
 }
