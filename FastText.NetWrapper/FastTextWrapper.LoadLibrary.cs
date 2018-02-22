@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using FastText.NetWrapper.Logging;
 using FastText.NetWrapper.Properties;
 
 namespace FastText.NetWrapper

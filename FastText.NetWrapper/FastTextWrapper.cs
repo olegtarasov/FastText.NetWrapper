@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
-using log4net;
+using FastText.NetWrapper.Logging;
 
 namespace FastText.NetWrapper
 {
@@ -13,7 +10,7 @@ namespace FastText.NetWrapper
     /// </summary>
     public partial class FastTextWrapper : IDisposable
     {
-        private static readonly ILog _log = LogManager.GetLogger(typeof(FastTextWrapper));
+        private static readonly ILog _log = LogProvider.For<FastTextWrapper>();
         private static readonly Encoding _utf8 = Encoding.UTF8;
         
         private IntPtr _fastText;
