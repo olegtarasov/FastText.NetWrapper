@@ -39,6 +39,9 @@ namespace FastText.NetWrapper
         
         [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern int GetMaxLabelLenght(IntPtr hPtr);
+
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static extern int GetLabels(IntPtr hPtr, IntPtr labels);
         
         [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern float PredictSingle(IntPtr hPtr, byte[] input, IntPtr predicted);

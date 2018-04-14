@@ -36,6 +36,28 @@ namespace FastText.NetWrapper
         }
 
         /// <summary>
+        /// Gets all labels that classifier was trained on.
+        /// </summary>
+        /// <returns>Labels.</returns>
+        public unsafe string[] GetLabels()
+        {
+            IntPtr labelsPtr;
+            int numLabels = GetLabels(_fastText, new IntPtr(&labelsPtr));
+
+            var result = new string[numLabels];
+            for (int i = 0; i < numLabels; i++)
+            {
+                var ptr = Marshal.ReadIntPtr(labelsPtr, i * IntPtr.Size);
+                // TODO: Support UTF-8 labels
+                result[i] = Marshal.PtrToStringAnsi(ptr);
+            }
+
+            DestroyStrings(labelsPtr, numLabels);
+
+            return result;
+        }
+
+        /// <summary>
         /// Predicts a single label from input text.
         /// </summary>
         /// <param name="text">Text to predict a label from.</param>
@@ -79,6 +101,7 @@ namespace FastText.NetWrapper
             for (int i = 0; i < cnt; i++)
             {
                 var ptr = Marshal.ReadIntPtr(labelsPtr, i * IntPtr.Size);
+                // TODO: Support UTF-8 labels
                 string label = Marshal.PtrToStringAnsi(ptr);
                 result[i] = new Prediction(probs[i], label);
             }

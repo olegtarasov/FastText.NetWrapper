@@ -23,6 +23,7 @@ namespace TestUtil
             //}));
 
             fastText.LoadModel(@"C:\_Models\ehd.bin");
+            var labels = fastText.GetLabels();
             var prediction = fastText.PredictSingle("не работает монитор");
             var predictions = fastText.PredictMultiple("не работает монитор", 4);
         }
