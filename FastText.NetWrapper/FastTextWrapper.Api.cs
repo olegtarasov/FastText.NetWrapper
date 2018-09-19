@@ -48,5 +48,11 @@ namespace FastText.NetWrapper
 
         [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern int PredictMultiple(IntPtr hPtr, byte[] input, IntPtr predictedLabels, float[] predictedProbabilities, int n);
+
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static extern  int GetSentenceVector(IntPtr hPtr, byte[] input, IntPtr vector);
+
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static  extern  void DestroyVector(IntPtr vector);
     }
 }

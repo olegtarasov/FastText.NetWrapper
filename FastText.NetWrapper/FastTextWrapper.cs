@@ -112,6 +112,28 @@ namespace FastText.NetWrapper
         }
 
         /// <summary>
+        /// Vectorizes a sentence.
+        /// </summary>
+        /// <param name="text">Sentence to vectorize.</param>
+        /// <returns>A single averaged vector.</returns>
+        public unsafe float[] GetSentenceVector(string text)
+        {
+            IntPtr vecPtr;
+            int dim = GetSentenceVector(_fastText, _utf8.GetBytes(text), new IntPtr(&vecPtr));
+
+            var result = new float[dim];
+            long sz = sizeof(float) * dim;
+            fixed (void* resPtr = &result[0])
+            {
+                Buffer.MemoryCopy(vecPtr.ToPointer(), resPtr, sz, sz);
+            }
+
+            DestroyVector(vecPtr);
+
+            return result;
+        }
+
+        /// <summary>
         /// Trains a new model.
         /// </summary>
         /// <param name="inputPath">Path to a training set.</param>

@@ -13,7 +13,7 @@ namespace TestUtil
         {
             var fastText = new FastTextWrapper();
 
-            //fastText.Train(@"C:\_Models\ehd_ft.txt", @"C:\_Models\ehd", TrainingArgs.SupervisedDefaults(x =>
+            //fastText.Train(@"C:\Models\ehd_small_ft.txt", @"C:\Models\ehd", TrainingArgs.SupervisedDefaults(x =>
             //{
             //    x.Epochs = 25;
             //    x.LearningRate = 1.0;
@@ -22,10 +22,11 @@ namespace TestUtil
             //    x.LabelPrefix = "__label__";
             //}));
 
-            fastText.LoadModel(@"C:\_Models\ehd.bin");
+            fastText.LoadModel(@"C:\Models\ehd.bin");
             var labels = fastText.GetLabels();
             var prediction = fastText.PredictSingle("не работает монитор");
             var predictions = fastText.PredictMultiple("не работает монитор", 4);
+            var vector = fastText.GetSentenceVector("не работает монитор");
         }
     }
 }
