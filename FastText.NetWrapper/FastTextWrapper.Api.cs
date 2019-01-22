@@ -19,40 +19,40 @@ namespace FastText.NetWrapper
             public int Verbose;
         }
 
-        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.StdCall)]
         private static extern IntPtr CreateFastText();
 
-        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.StdCall)]
         private static extern void DestroyFastText(IntPtr hPtr);
 
-        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.StdCall)]
         private static extern void DestroyString(IntPtr str);
 
-        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.StdCall)]
         private static extern void DestroyStrings(IntPtr strings, int cnt);
 
-        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         private static extern void TrainSupervised(IntPtr hPtr, string input, string output, TrainingArgsStruct args, string labelPrefix);
 
-        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         private static extern void LoadModel(IntPtr hPtr, string path);
         
-        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.StdCall)]
         private static extern int GetMaxLabelLenght(IntPtr hPtr);
 
-        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         private static extern int GetLabels(IntPtr hPtr, IntPtr labels);
         
-        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         private static extern float PredictSingle(IntPtr hPtr, byte[] input, IntPtr predicted);
 
-        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         private static extern int PredictMultiple(IntPtr hPtr, byte[] input, IntPtr predictedLabels, float[] predictedProbabilities, int n);
 
-        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         private static extern  int GetSentenceVector(IntPtr hPtr, byte[] input, IntPtr vector);
 
-        [DllImport(FastTextDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport(FastTextDll, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         private static  extern  void DestroyVector(IntPtr vector);
     }
 }

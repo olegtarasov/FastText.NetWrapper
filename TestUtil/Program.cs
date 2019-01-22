@@ -11,22 +11,24 @@ namespace TestUtil
     {
         static void Main(string[] args)
         {
-            var fastText = new FastTextWrapper();
+            using (var fastText = new FastTextWrapper())
+            {
 
-            //fastText.Train(@"C:\Models\ehd_small_ft.txt", @"C:\Models\ehd", TrainingArgs.SupervisedDefaults(x =>
-            //{
-            //    x.Epochs = 25;
-            //    x.LearningRate = 1.0;
-            //    x.WordNGrams = 3;
-            //    x.Verbose = 2;
-            //    x.LabelPrefix = "__label__";
-            //}));
+                //fastText.Train(@"C:\Models\cooking.stackexchange.txt", @"C:\Models\cooking", TrainingArgs.SupervisedDefaults(x =>
+                //{
+                //    x.Epochs = 25;
+                //    x.LearningRate = 1.0;
+                //    x.WordNGrams = 3;
+                //    x.Verbose = 2;
+                //    x.LabelPrefix = "__label__";
+                //}));
 
-            fastText.LoadModel(@"C:\Models\ehd.bin");
-            var labels = fastText.GetLabels();
-            var prediction = fastText.PredictSingle("не работает монитор");
-            var predictions = fastText.PredictMultiple("не работает монитор", 4);
-            var vector = fastText.GetSentenceVector("не работает монитор");
+                fastText.LoadModel(@"C:\Models\cooking.bin");
+                var labels = fastText.GetLabels();
+                var prediction = fastText.PredictSingle("Can I use a larger crockpot than the recipe calls for?");
+                var predictions = fastText.PredictMultiple("Can I use a larger crockpot than the recipe calls for?", 4);
+                var vector = fastText.GetSentenceVector("Can I use a larger crockpot than the recipe calls for?");
+            }
         }
     }
 }
