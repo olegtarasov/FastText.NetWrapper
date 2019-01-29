@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using FastText.NetWrapper.Logging;
@@ -134,25 +135,72 @@ namespace FastText.NetWrapper
         }
 
         /// <summary>
-        /// Trains a new model.
+        /// Trains a new supervised classification model.
         /// </summary>
         /// <param name="inputPath">Path to a training set.</param>
         /// <param name="outputPath">Path to write the model to (excluding extension).</param>
         /// <param name="args">Training arguments.</param>
         /// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
-        public void Train(string inputPath, string outputPath, TrainingArgs args)
+        public void Train(string inputPath, string outputPath, SupervisedArgs args)
         {
-            var argsStruct = new TrainingArgsStruct
+            ValidatePaths(inputPath, outputPath, null);
+
+            var argsStruct = new SupervisedArgsStruct
                              {
                                  Epochs = args.Epochs,
                                  LearningRate = args.LearningRate,
                                  MaxCharNGrams = args.MaxCharNGrams,
                                  MinCharNGrams = args.MinCharNGrams,
                                  Verbose = args.Verbose,
-                                 WordNGrams = args.WordNGrams
+                                 WordNGrams = args.WordNGrams,
+                                 Threads = args.Threads ?? 0
                              };
             
             TrainSupervised(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix);
+            _maxLabelLen = GetMaxLabelLenght(_fastText);
+        }
+
+        /// <summary>
+        /// Trains a new model using low-level FastText arguments.
+        /// </summary>
+        /// <param name="inputPath">Path to a training set.</param>
+        /// <param name="outputPath">Path to write the model to (excluding extension).</param>
+        /// <param name="args">Low-level training arguments.</param>
+        /// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+        public void Train(string inputPath, string outputPath, FastTextArgs args)
+        {
+            ValidatePaths(inputPath, outputPath, args.PretrainedVectors);
+
+            var argsStruct = new TrainingArgsStruct
+                             {
+                                 bucket = args.bucket,
+                                 cutoff = args.cutoff,
+                                 dim = args.dim,
+                                 dsub = args.dsub,
+                                 epoch = args.epoch,
+
+                                 loss = (loss_name)args.loss,
+                                 lr = args.lr,
+                                 lrUpdateRate = args.lrUpdateRate,
+                                 maxn = args.maxn,
+                                 minCount = args.minCount,
+                                 minCountLabel = args.minCountLabel,
+                                 minn = args.minn,
+                                 model = (model_name)args.model,
+                                 neg = args.neg,
+
+                                 qnorm = args.qnorm,
+                                 qout = args.qout,
+                                 retrain = args.retrain,
+                                 saveOutput = args.saveOutput,
+                                 t = args.t,
+                                 thread = args.thread,
+                                 verbose = args.verbose,
+                                 wordNgrams = args.wordNgrams,
+                                 ws = args.ws,
+                             };
+
+            Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors);
             _maxLabelLen = GetMaxLabelLenght(_fastText);
         }
 
@@ -166,6 +214,24 @@ namespace FastText.NetWrapper
 
             DestroyFastText(_fastText);
             _fastText = IntPtr.Zero;
+        }
+
+        private void ValidatePaths(string input, string output, string pretrained)
+        {
+            if (string.IsNullOrEmpty(input) || !File.Exists(input))
+            {
+                throw new FileNotFoundException($"Invalid input file name!", input);
+            }
+
+            if (string.IsNullOrEmpty(output) || !Directory.Exists(Path.GetDirectoryName(output)))
+            {
+                throw new DirectoryNotFoundException("Invalid output directory!");
+            }
+
+            if (pretrained != null && (!File.Exists(pretrained)))
+            {
+                throw new FileNotFoundException("Invalid pretrained vectors path!", pretrained);
+            }
         }
     }
 }
