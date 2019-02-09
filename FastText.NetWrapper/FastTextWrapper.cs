@@ -6,232 +6,251 @@ using FastText.NetWrapper.Logging;
 
 namespace FastText.NetWrapper
 {
-    /// <summary>
-    /// A wrapper around native fastText implementation.
-    /// </summary>
-    public partial class FastTextWrapper : IDisposable
-    {
-        private static readonly ILog _log = LogProvider.For<FastTextWrapper>();
-        private static readonly Encoding _utf8 = Encoding.UTF8;
-        
-        private IntPtr _fastText;
-        private int _maxLabelLen;
+	/// <summary>
+	/// A wrapper around native fastText implementation.
+	/// </summary>
+	public partial class FastTextWrapper : IDisposable
+	{
+		private static readonly ILog _log = LogProvider.For<FastTextWrapper>();
+		private static readonly Encoding _utf8 = Encoding.UTF8;
 
-        /// <summary>
-        /// Ctor.
-        /// </summary>
-        public FastTextWrapper()
-        {
-            LoadNativeLibrary();
-            _fastText = CreateFastText();
-        }
+		private IntPtr _fastText;
+		private int _maxLabelLen;
 
-        /// <summary>
-        /// Loads a trained model from a file.
-        /// </summary>
-        /// <param name="path">Path to a model (.bin file).</param>
-        public void LoadModel(string path)
-        {
-            LoadModel(_fastText, path);
-            _maxLabelLen = GetMaxLabelLenght(_fastText);
-        }
+		/// <summary>
+		/// Ctor.
+		/// </summary>
+		public FastTextWrapper()
+		{
+			LoadNativeLibrary();
+			_fastText = CreateFastText();
+		}
 
-        /// <summary>
-        /// Gets all labels that classifier was trained on.
-        /// </summary>
-        /// <returns>Labels.</returns>
-        public unsafe string[] GetLabels()
-        {
-            IntPtr labelsPtr;
-            int numLabels = GetLabels(_fastText, new IntPtr(&labelsPtr));
+		/// <summary>
+		/// Loads a trained model from a file.
+		/// </summary>
+		/// <param name="path">Path to a model (.bin file).</param>
+		public void LoadModel(string path)
+		{
+			LoadModel(_fastText, path);
+			_maxLabelLen = GetMaxLabelLenght(_fastText);
+		}
 
-            var result = new string[numLabels];
-            for (int i = 0; i < numLabels; i++)
-            {
-                var ptr = Marshal.ReadIntPtr(labelsPtr, i * IntPtr.Size);
-                // TODO: Support UTF-8 labels
-                result[i] = Marshal.PtrToStringAnsi(ptr);
-            }
+		/// <summary>
+		/// Gets all labels that classifier was trained on.
+		/// </summary>
+		/// <returns>Labels.</returns>
+		public unsafe string[] GetLabels()
+		{
+			IntPtr labelsPtr;
+			int numLabels = GetLabels(_fastText, new IntPtr(&labelsPtr));
 
-            DestroyStrings(labelsPtr, numLabels);
+			var result = new string[numLabels];
+			for (int i = 0; i < numLabels; i++)
+			{
+				var ptr = Marshal.ReadIntPtr(labelsPtr, i * IntPtr.Size);
+				result[i] = _utf8.GetString(GetStringBytes(ptr));
+			}
 
-            return result;
-        }
+			DestroyStrings(labelsPtr, numLabels);
 
-        /// <summary>
-        /// Predicts a single label from input text.
-        /// </summary>
-        /// <param name="text">Text to predict a label from.</param>
-        /// <returns>Single prediction.</returns>
-        public unsafe Prediction PredictSingle(string text)
-        {
-            if (_maxLabelLen == 0)
-            {
-                throw new InvalidOperationException("Model not loaded!");
-            }
+			return result;
+		}
 
-            IntPtr labelPtr;
-            float prob = PredictSingle(_fastText, _utf8.GetBytes(text), new IntPtr(&labelPtr));
-            
-            // TODO: We are assuming ASCII strings, but they are UTF-8
-            string label = Marshal.PtrToStringAnsi(labelPtr);
-            DestroyString(labelPtr);
+		/// <summary>
+		/// Predicts a single label from input text.
+		/// </summary>
+		/// <param name="text">Text to predict a label from.</param>
+		/// <returns>Single prediction.</returns>
+		public unsafe Prediction PredictSingle(string text)
+		{
+			if (_maxLabelLen == 0)
+			{
+				throw new InvalidOperationException("Model not loaded!");
+			}
 
-            return new Prediction(prob, label);
-        }
+			IntPtr labelPtr;
+			float prob = PredictSingle(_fastText, _utf8.GetBytes(text), new IntPtr(&labelPtr));
 
-        /// <summary>
-        /// Predicts multiple labels from input text.
-        /// </summary>
-        /// <param name="text">Text to predict labels from.</param>
-        /// <param name="number">Number of labels to predict.</param>
-        /// <returns>Multiple predictions.</returns>
-        public unsafe Prediction[] PredictMultiple(string text, int number)
-        {
-            if (_maxLabelLen == 0)
-            {
-                throw new InvalidOperationException("Model not loaded!");
-            }
+			string label = _utf8.GetString(GetStringBytes(labelPtr));
+			DestroyString(labelPtr);
 
-            var probs = new float[number];
-            IntPtr labelsPtr;
-            
-            int cnt = PredictMultiple(_fastText, _utf8.GetBytes(text), new IntPtr(&labelsPtr), probs, number);
-            var result = new Prediction[cnt];
+			return new Prediction(prob, label);
+		}
 
-            for (int i = 0; i < cnt; i++)
-            {
-                var ptr = Marshal.ReadIntPtr(labelsPtr, i * IntPtr.Size);
-                // TODO: Support UTF-8 labels
-                string label = Marshal.PtrToStringAnsi(ptr);
-                result[i] = new Prediction(probs[i], label);
-            }
+		/// <summary>
+		/// Predicts multiple labels from input text.
+		/// </summary>
+		/// <param name="text">Text to predict labels from.</param>
+		/// <param name="number">Number of labels to predict.</param>
+		/// <returns>Multiple predictions.</returns>
+		public unsafe Prediction[] PredictMultiple(string text, int number)
+		{
+			if (_maxLabelLen == 0)
+			{
+				throw new InvalidOperationException("Model not loaded!");
+			}
 
-            DestroyStrings(labelsPtr, cnt);
+			var probs = new float[number];
+			IntPtr labelsPtr;
 
-            return result;
-        }
+			int cnt = PredictMultiple(_fastText, _utf8.GetBytes(text), new IntPtr(&labelsPtr), probs, number);
+			var result = new Prediction[cnt];
 
-        /// <summary>
-        /// Vectorizes a sentence.
-        /// </summary>
-        /// <param name="text">Sentence to vectorize.</param>
-        /// <returns>A single averaged vector.</returns>
-        public unsafe float[] GetSentenceVector(string text)
-        {
-            IntPtr vecPtr;
-            int dim = GetSentenceVector(_fastText, _utf8.GetBytes(text), new IntPtr(&vecPtr));
+			for (int i = 0; i < cnt; i++)
+			{
+				var ptr = Marshal.ReadIntPtr(labelsPtr, i * IntPtr.Size);
+				string label = _utf8.GetString(GetStringBytes(ptr));
+				result[i] = new Prediction(probs[i], label);
+			}
 
-            var result = new float[dim];
-            long sz = sizeof(float) * dim;
-            fixed (void* resPtr = &result[0])
-            {
-                Buffer.MemoryCopy(vecPtr.ToPointer(), resPtr, sz, sz);
-            }
+			DestroyStrings(labelsPtr, cnt);
 
-            DestroyVector(vecPtr);
+			return result;
+		}
 
-            return result;
-        }
+		/// <summary>
+		/// Vectorizes a sentence.
+		/// </summary>
+		/// <param name="text">Sentence to vectorize.</param>
+		/// <returns>A single averaged vector.</returns>
+		public unsafe float[] GetSentenceVector(string text)
+		{
+			IntPtr vecPtr;
+			int dim = GetSentenceVector(_fastText, _utf8.GetBytes(text), new IntPtr(&vecPtr));
 
-        /// <summary>
-        /// Trains a new supervised classification model.
-        /// </summary>
-        /// <param name="inputPath">Path to a training set.</param>
-        /// <param name="outputPath">Path to write the model to (excluding extension).</param>
-        /// <param name="args">Training arguments.</param>
-        /// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
-        public void Train(string inputPath, string outputPath, SupervisedArgs args)
-        {
-            ValidatePaths(inputPath, outputPath, null);
+			var result = new float[dim];
+			long sz = sizeof(float) * dim;
+			fixed (void* resPtr = &result[0])
+			{
+				Buffer.MemoryCopy(vecPtr.ToPointer(), resPtr, sz, sz);
+			}
 
-            var argsStruct = new SupervisedArgsStruct
-                             {
-                                 Epochs = args.Epochs,
-                                 LearningRate = args.LearningRate,
-                                 MaxCharNGrams = args.MaxCharNGrams,
-                                 MinCharNGrams = args.MinCharNGrams,
-                                 Verbose = args.Verbose,
-                                 WordNGrams = args.WordNGrams,
-                                 Threads = args.Threads ?? 0
-                             };
-            
-            TrainSupervised(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix);
-            _maxLabelLen = GetMaxLabelLenght(_fastText);
-        }
+			DestroyVector(vecPtr);
 
-        /// <summary>
-        /// Trains a new model using low-level FastText arguments.
-        /// </summary>
-        /// <param name="inputPath">Path to a training set.</param>
-        /// <param name="outputPath">Path to write the model to (excluding extension).</param>
-        /// <param name="args">Low-level training arguments.</param>
-        /// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
-        public void Train(string inputPath, string outputPath, FastTextArgs args)
-        {
-            ValidatePaths(inputPath, outputPath, args.PretrainedVectors);
+			return result;
+		}
 
-            var argsStruct = new TrainingArgsStruct
-                             {
-                                 bucket = args.bucket,
-                                 cutoff = args.cutoff,
-                                 dim = args.dim,
-                                 dsub = args.dsub,
-                                 epoch = args.epoch,
+		/// <summary>
+		/// Trains a new supervised classification model.
+		/// </summary>
+		/// <param name="inputPath">Path to a training set.</param>
+		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
+		/// <param name="args">Training arguments.</param>
+		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+		public void Train(string inputPath, string outputPath, SupervisedArgs args)
+		{
+			ValidatePaths(inputPath, outputPath, null);
 
-                                 loss = (loss_name)args.loss,
-                                 lr = args.lr,
-                                 lrUpdateRate = args.lrUpdateRate,
-                                 maxn = args.maxn,
-                                 minCount = args.minCount,
-                                 minCountLabel = args.minCountLabel,
-                                 minn = args.minn,
-                                 model = (model_name)args.model,
-                                 neg = args.neg,
+			var argsStruct = new SupervisedArgsStruct
+							{
+								Epochs = args.Epochs,
+								LearningRate = args.LearningRate,
+								MaxCharNGrams = args.MaxCharNGrams,
+								MinCharNGrams = args.MinCharNGrams,
+								Verbose = args.Verbose,
+								WordNGrams = args.WordNGrams,
+								Threads = args.Threads ?? 0
+							};
 
-                                 qnorm = args.qnorm,
-                                 qout = args.qout,
-                                 retrain = args.retrain,
-                                 saveOutput = args.saveOutput,
-                                 t = args.t,
-                                 thread = args.thread,
-                                 verbose = args.verbose,
-                                 wordNgrams = args.wordNgrams,
-                                 ws = args.ws,
-                             };
+			TrainSupervised(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix);
+			_maxLabelLen = GetMaxLabelLenght(_fastText);
+		}
 
-            Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors);
-            _maxLabelLen = GetMaxLabelLenght(_fastText);
-        }
+		/// <summary>
+		/// Trains a new model using low-level FastText arguments.
+		/// </summary>
+		/// <param name="inputPath">Path to a training set.</param>
+		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
+		/// <param name="args">Low-level training arguments.</param>
+		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+		public void Train(string inputPath, string outputPath, FastTextArgs args)
+		{
+			ValidatePaths(inputPath, outputPath, args.PretrainedVectors);
 
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            if (_fastText == IntPtr.Zero)
-            {
-                return;
-            }
+			var argsStruct = new TrainingArgsStruct
+							{
+								bucket = args.bucket,
+								cutoff = args.cutoff,
+								dim = args.dim,
+								dsub = args.dsub,
+								epoch = args.epoch,
 
-            DestroyFastText(_fastText);
-            _fastText = IntPtr.Zero;
-        }
+								loss = (loss_name)args.loss,
+								lr = args.lr,
+								lrUpdateRate = args.lrUpdateRate,
+								maxn = args.maxn,
+								minCount = args.minCount,
+								minCountLabel = args.minCountLabel,
+								minn = args.minn,
+								model = (model_name)args.model,
+								neg = args.neg,
 
-        private void ValidatePaths(string input, string output, string pretrained)
-        {
-            if (string.IsNullOrEmpty(input) || !File.Exists(input))
-            {
-                throw new FileNotFoundException($"Invalid input file name!", input);
-            }
+								qnorm = args.qnorm,
+								qout = args.qout,
+								retrain = args.retrain,
+								saveOutput = args.saveOutput,
+								t = args.t,
+								thread = args.thread,
+								verbose = args.verbose,
+								wordNgrams = args.wordNgrams,
+								ws = args.ws,
+							};
 
-            if (string.IsNullOrEmpty(output) || !Directory.Exists(Path.GetDirectoryName(output)))
-            {
-                throw new DirectoryNotFoundException("Invalid output directory!");
-            }
+			Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors);
+			_maxLabelLen = GetMaxLabelLenght(_fastText);
+		}
 
-            if (pretrained != null && (!File.Exists(pretrained)))
-            {
-                throw new FileNotFoundException("Invalid pretrained vectors path!", pretrained);
-            }
-        }
-    }
+		/// <inheritdoc />
+		public void Dispose()
+		{
+			if (_fastText == IntPtr.Zero)
+			{
+				return;
+			}
+
+			DestroyFastText(_fastText);
+			_fastText = IntPtr.Zero;
+		}
+
+		private void ValidatePaths(string input, string output, string pretrained)
+		{
+			if (string.IsNullOrEmpty(input) || !File.Exists(input))
+			{
+				throw new FileNotFoundException($"Invalid input file name!", input);
+			}
+
+			if (string.IsNullOrEmpty(output) || !Directory.Exists(Path.GetDirectoryName(output)))
+			{
+				throw new DirectoryNotFoundException("Invalid output directory!");
+			}
+
+			if (pretrained != null && (!File.Exists(pretrained)))
+			{
+				throw new FileNotFoundException("Invalid pretrained vectors path!", pretrained);
+			}
+		}
+
+		private unsafe byte[] GetStringBytes(IntPtr ptr)
+		{
+			var bPtr = (byte*)ptr.ToPointer();
+			int len = 0;
+
+			while (*bPtr != 0)
+			{
+				len++;
+				bPtr++;
+			}
+
+			if (len == 0)
+			{
+				return Array.Empty<byte>();
+			}
+
+			var result = new byte[len];
+			Marshal.Copy(ptr, result, 0, len);
+
+			return result;
+		}
+	}
 }
