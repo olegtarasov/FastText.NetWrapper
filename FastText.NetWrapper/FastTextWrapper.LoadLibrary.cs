@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using FastText.NetWrapper.Logging;
@@ -39,7 +40,13 @@ namespace FastText.NetWrapper
         {
             _log.Info($"Directly loading {path}...");
             var result = LoadLibraryEx(path, IntPtr.Zero, LoadLibraryFlags.LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LoadLibraryFlags.LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LoadLibraryFlags.LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LoadLibraryFlags.LOAD_LIBRARY_SEARCH_SYSTEM32 | LoadLibraryFlags.LOAD_LIBRARY_SEARCH_USER_DIRS);
-            _log.Info(result == IntPtr.Zero ? "FAILED!" : "Success");
+            if (result == IntPtr.Zero)
+            {
+                var error = Marshal.GetLastWin32Error();
+                _log.Error($"FAILED! Last Win32 error is: {error}");
+                throw new Exception($"Failed to load library with path \"{path}\"");
+            }
+            _log.Info("Successfully loaded library.");
         }
 
         private static string UnpackResources()
@@ -66,9 +73,46 @@ namespace FastText.NetWrapper
         {
             var path = !string.IsNullOrEmpty(curDir) ? Path.Combine(curDir, fileName) : fileName;
 
-            _log.Info($"Unpacking {fileName}.");
+            try
+            {
+                if (File.Exists(path))
+                {
+                    var existingFileContents = File.ReadAllBytes(path);
+                    if (existingFileContents.Length == bytes.Length)
+                    {
+                        if (existingFileContents.SequenceEqual(bytes))
+                        {
+                            _log.Info($"File {path} already exists and is the same (length and contents)");
+                            return;
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _log.Warn($"Unable to determine size of existing file, will replace with our version. Message: {e.Message}");
+                try
+                {
+                    File.Delete(path);
+                }
+                catch (Exception deleteException)
+                {
+                    _log.Error($"Unable to delete existing file: {path}. Message: {deleteException.Message}");
+                    return;
+                }
+            }
 
-            File.WriteAllBytes(path, bytes);
+            _log.Info($"Unpacking {fileName} to path {curDir}.");
+
+            try
+            {
+                File.WriteAllBytes(path, bytes);
+            }
+            catch (Exception writeException)
+            {
+                _log.Error($"Unable to write: {path}. Message: {writeException.Message}");
+                throw;
+            }
         }
 
         #region LoadLibraryEx
