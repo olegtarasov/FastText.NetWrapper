@@ -6,7 +6,7 @@
 
 This is a cross-platform .NET Standard wrapper for Facebook's [FastText](https://github.com/facebookresearch/fastText) library. The wrapper comes with bundled precompiled native binaries for all three platforms: Windows, Linux and MacOs.
 
-Just add it to your project and start using it! No additional setup required. This library will unpack call appropriate native binary depending on target platform.
+Just add it to your project and start using it! No additional setup required. This library will unpack and call appropriate native binary depending on target platform.
 
 ## Requirements
 
