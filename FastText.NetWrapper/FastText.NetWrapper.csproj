@@ -10,6 +10,7 @@
     <Copyright>Oleg Tarasov</Copyright>
     <PackageProjectUrl>https://github.com/olegtarasov/FastText.NetWrapper</PackageProjectUrl>
     <RepositoryUrl>https://github.com/olegtarasov/FastText.NetWrapper</RepositoryUrl>
+    <PackageVersion>1.0.1</PackageVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
