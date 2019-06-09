@@ -5,6 +5,10 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DocumentationFile>bin\Release\FastText.NetWrapper.xml</DocumentationFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="FastText.Native.Linux" Version="1.0.67" />
     <PackageReference Include="FastText.Native.MacOs" Version="1.0.66" />

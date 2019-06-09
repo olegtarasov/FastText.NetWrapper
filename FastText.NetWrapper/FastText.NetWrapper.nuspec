@@ -16,7 +16,7 @@
         </references>
     </metadata>
     <files>
-        <file src="bin\x64\Release\FastText.NetWrapper.dll" target="lib\net\FastText.NetWrapper.dll" />
-        <file src="bin\x64\Release\FastText.NetWrapper.xml" target="lib\net\FastText.NetWrapper.xml" />
+        <file src="bin\x64\Release\netstandard2.0\FastText.NetWrapper.dll" target="lib\net\FastText.NetWrapper.dll" />
+        <file src="bin\x64\Release\netstandard2.0\FastText.NetWrapper.xml" target="lib\net\FastText.NetWrapper.xml" />
     </files>
 </package>
