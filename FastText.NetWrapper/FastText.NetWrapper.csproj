@@ -3,6 +3,13 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Title>FastText.NetWrapper</Title>
+    <Authors>Oleg Tarasov</Authors>
+    <Description>Crossplatform .NET wrapper for Facebook's FastText library. Works on Windows, Linux and MacOs!</Description>
+    <Copyright>Oleg Tarasov</Copyright>
+    <PackageProjectUrl>https://github.com/olegtarasov/FastText.NetWrapper</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/olegtarasov/FastText.NetWrapper</RepositoryUrl>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
