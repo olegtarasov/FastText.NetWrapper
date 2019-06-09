@@ -8,9 +8,9 @@ This is a cross-platform .NET Standard wrapper for Facebook's [FastText](https:/
 
 Just add it to your project and start using it! No additional setup required. This library will unpack and call appropriate native binary depending on target platform.
 
-## Requirements
+## Windows Requirements
 
-Since this wrapper uses native C++ binaries under the hood, you will need to have Visual C++ Runtime Version 140 installed. Visit the MS Downloads page (https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads) and select the appropriate redistributable. 
+Since this wrapper uses native C++ binaries under the hood, you will need to have Visual C++ Runtime Version 140 installed when running under Windows. Visit the MS Downloads page (https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads) and select the appropriate redistributable. 
 
 ## FastText C-style API
 
