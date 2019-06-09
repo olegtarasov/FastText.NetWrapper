@@ -6,13 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FastText.Native.Linux" Version="1.0.67" />
+    <PackageReference Include="FastText.Native.MacOs" Version="1.0.66" />
+    <PackageReference Include="FastText.Native.Windows" Version="1.0.65" />
     <PackageReference Include="LibLog" Version="5.0.6" />
     <PackageReference Include="NativeLibraryManager" Version="1.0.14" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\FastText.dll" />
-    <EmbeddedResource Include="Resources\libfasttext.dylib" />
   </ItemGroup>
 
 </Project>

@@ -28,9 +28,11 @@ namespace FastText.NetWrapper
 			var manager = new LibraryManager(
 				Assembly.GetExecutingAssembly(),
 				new LibraryItem(Platform.Windows, Bitness.x64,
-					new LibraryFile("FastText.dll", accessor.Binary("Resources.FastText.dll"))),
+					new LibraryFile("fasttext.dll", accessor.Binary("Resources.fasttext.dll"))),
 				new LibraryItem(Platform.MacOs, Bitness.x64,
-					new LibraryFile("libfasttext.dylib", accessor.Binary("Resources.libfasttext.dylib"))));
+					new LibraryFile("libfasttext.dylib", accessor.Binary("Resources.libfasttext.dylib"))),
+				new LibraryItem(Platform.Linux, Bitness.x64,
+					new LibraryFile("libfasttext.so", accessor.Binary("Resources.libfasttext.so"))));
 			
 			manager.LoadNativeLibrary();
 			
