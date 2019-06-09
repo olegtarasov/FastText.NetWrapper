@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using FastText.NetWrapper.Logging;
+using NativeLibraryManager;
 
 namespace FastText.NetWrapper
 {
@@ -22,7 +24,16 @@ namespace FastText.NetWrapper
 		/// </summary>
 		public FastTextWrapper()
 		{
-			LoadNativeLibrary();
+			var accessor = new ResourceAccessor(Assembly.GetExecutingAssembly());
+			var manager = new LibraryManager(
+				Assembly.GetExecutingAssembly(),
+				new LibraryItem(Platform.Windows, Bitness.x64,
+					new LibraryFile("FastText.dll", accessor.Binary("Resources.FastText.dll"))),
+				new LibraryItem(Platform.MacOs, Bitness.x64,
+					new LibraryFile("libfasttext.dylib", accessor.Binary("Resources.libfasttext.dylib"))));
+			
+			manager.LoadNativeLibrary();
+			
 			_fastText = CreateFastText();
 		}
 
