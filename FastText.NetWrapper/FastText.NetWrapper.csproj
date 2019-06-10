@@ -18,9 +18,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FastText.Native.Linux" Version="1.0.67" />
+    <None Remove="Resources\libfasttext.so" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\libfasttext.so" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="FastText.Native.MacOs" Version="1.0.66" />
-    <PackageReference Include="FastText.Native.Windows" Version="1.0.65" />
+    <PackageReference Include="FastText.Native.Windows" Version="1.0.68" />
     <PackageReference Include="LibLog" Version="5.0.6" />
     <PackageReference Include="NativeLibraryManager" Version="1.0.14" />
   </ItemGroup>
