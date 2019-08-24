@@ -17,6 +17,7 @@ namespace FastText.NetWrapper
 		private static readonly Encoding _utf8 = Encoding.UTF8;
 
 		private IntPtr _fastText;
+		private bool _modelLoaded = false;
 		private int _maxLabelLen;
 
 		/// <summary>
@@ -47,6 +48,7 @@ namespace FastText.NetWrapper
 		{
 			LoadModel(_fastText, path);
 			_maxLabelLen = GetMaxLabelLenght(_fastText);
+			_modelLoaded = true;
 		}
 
 		/// <summary>
@@ -55,6 +57,8 @@ namespace FastText.NetWrapper
 		/// <returns>Labels.</returns>
 		public unsafe string[] GetLabels()
 		{
+			CheckModelLoaded();
+			
 			IntPtr labelsPtr;
 			int numLabels = GetLabels(_fastText, new IntPtr(&labelsPtr));
 
@@ -77,10 +81,8 @@ namespace FastText.NetWrapper
 		/// <returns>Single prediction.</returns>
 		public unsafe Prediction PredictSingle(string text)
 		{
-			if (_maxLabelLen == 0)
-			{
-				throw new InvalidOperationException("Model not loaded!");
-			}
+			CheckModelLoaded();
+			CheckModelLabels();
 
 			IntPtr labelPtr;
 			float prob = PredictSingle(_fastText, _utf8.GetBytes(text), new IntPtr(&labelPtr));
@@ -99,10 +101,8 @@ namespace FastText.NetWrapper
 		/// <returns>Multiple predictions.</returns>
 		public unsafe Prediction[] PredictMultiple(string text, int number)
 		{
-			if (_maxLabelLen == 0)
-			{
-				throw new InvalidOperationException("Model not loaded!");
-			}
+			CheckModelLoaded();
+			CheckModelLabels();
 
 			var probs = new float[number];
 			IntPtr labelsPtr;
@@ -129,6 +129,8 @@ namespace FastText.NetWrapper
 		/// <returns>A single averaged vector.</returns>
 		public unsafe float[] GetSentenceVector(string text)
 		{
+			CheckModelLoaded();
+			
 			IntPtr vecPtr;
 			int dim = GetSentenceVector(_fastText, _utf8.GetBytes(text), new IntPtr(&vecPtr));
 
@@ -168,6 +170,7 @@ namespace FastText.NetWrapper
 
 			TrainSupervised(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix);
 			_maxLabelLen = GetMaxLabelLenght(_fastText);
+			_modelLoaded = true;
 		}
 
 		/// <summary>
@@ -212,6 +215,7 @@ namespace FastText.NetWrapper
 
 			Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors);
 			_maxLabelLen = GetMaxLabelLenght(_fastText);
+			_modelLoaded = true;
 		}
 
 		/// <inheritdoc />
@@ -226,6 +230,22 @@ namespace FastText.NetWrapper
 			_fastText = IntPtr.Zero;
 		}
 
+		private void CheckModelLabels()
+		{
+			if (_maxLabelLen == 0)
+			{
+				throw new InvalidOperationException("Loaded model doesn't contain supervised labels. Maybe you loaded an unsupervised model?");
+			}
+		}
+		
+		private void CheckModelLoaded()
+		{
+			if (!_modelLoaded)
+			{
+				throw new InvalidOperationException("Model not loaded!");
+			}
+		}
+		
 		private void ValidatePaths(string input, string output, string pretrained)
 		{
 			if (string.IsNullOrEmpty(input) || !File.Exists(input))
