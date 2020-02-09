@@ -11,6 +11,7 @@
     <PackageProjectUrl>https://github.com/olegtarasov/FastText.NetWrapper</PackageProjectUrl>
     <RepositoryUrl>https://github.com/olegtarasov/FastText.NetWrapper</RepositoryUrl>
     <PackageVersion>1.0.1</PackageVersion>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/olegtarasov/FastText.NetWrapper/master/LICENSE</PackageLicenseUrl>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
