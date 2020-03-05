@@ -10,11 +10,11 @@ namespace TestUtil
 {
     class Program
     {
-        private const string Usage = "Usage: tesutil [train|trainlowlevel|load] train_file model_file";
+        private static string Usage = $"Usage: tesutil [train|trainlowlevel|load] train_file model_file{Environment.NewLine}Usage: tesutil nn model_file";
         
         static void Main(string[] args)
         {
-            if (args.Length < 3)
+            if ((args.FirstOrDefault() == "nn" && args.Length < 2) || (args.FirstOrDefault() != "nn" && args.Length < 3))
             {
                 Console.WriteLine(Usage);
                 return;
@@ -34,8 +34,16 @@ namespace TestUtil
                         fastText.LoadModel(args[2]);
                         break;
                 }
-                
-                Test(fastText);
+
+                if (args[0] != "nn")
+                {
+                    Test(fastText);
+                }
+                else
+                {
+                    fastText.LoadModel(args[1]);
+                    TestNN(fastText);
+                }
             }
         }
 
@@ -66,6 +74,11 @@ namespace TestUtil
             var prediction = fastText.PredictSingle("Can I use a larger crockpot than the recipe calls for?");
             var predictions = fastText.PredictMultiple("Can I use a larger crockpot than the recipe calls for?", 4);
             var vector = fastText.GetSentenceVector("Can I use a larger crockpot than the recipe calls for?");
+        }
+
+        private static void TestNN(FastTextWrapper fastText)
+        {
+            fastText.GetNN("train", 5);
         }
     }
 }

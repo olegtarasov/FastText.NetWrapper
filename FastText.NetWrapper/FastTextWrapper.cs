@@ -47,7 +47,7 @@ namespace FastText.NetWrapper
 		public void LoadModel(string path)
 		{
 			LoadModel(_fastText, path);
-			_maxLabelLen = GetMaxLabelLenght(_fastText);
+			_maxLabelLen = GetMaxLabelLength(_fastText);
 			_modelLoaded = true;
 		}
 
@@ -70,6 +70,34 @@ namespace FastText.NetWrapper
 			}
 
 			DestroyStrings(labelsPtr, numLabels);
+
+			return result;
+		}
+
+		/// <summary>
+		/// Calculate nearest neighbor from input text.
+		/// </summary>
+		/// <param name="text">Text to calculating the nearest neighbor from.</param>
+		/// <param name="number">Number of neighbors.</param>
+		/// <returns>Nearest neighbor predictions.</returns>
+		public unsafe Prediction[] GetNN(string text, int number)
+		{
+			CheckModelLoaded();
+
+			var probs = new float[number];
+			IntPtr labelsPtr;
+
+			int cnt = GetNN(_fastText, _utf8.GetBytes(text), new IntPtr(&labelsPtr), probs, number);
+			var result = new Prediction[cnt];
+
+			for (int i = 0; i < cnt; i++)
+			{
+				var ptr = Marshal.ReadIntPtr(labelsPtr, i * IntPtr.Size);
+				string label = _utf8.GetString(GetStringBytes(ptr));
+				result[i] = new Prediction(probs[i], label);
+			}
+
+			DestroyStrings(labelsPtr, cnt);
 
 			return result;
 		}
@@ -169,7 +197,7 @@ namespace FastText.NetWrapper
 							};
 
 			TrainSupervised(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix);
-			_maxLabelLen = GetMaxLabelLenght(_fastText);
+			_maxLabelLen = GetMaxLabelLength(_fastText);
 			_modelLoaded = true;
 		}
 
@@ -214,7 +242,7 @@ namespace FastText.NetWrapper
 							};
 
 			Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors);
-			_maxLabelLen = GetMaxLabelLenght(_fastText);
+			_maxLabelLen = GetMaxLabelLength(_fastText);
 			_modelLoaded = true;
 		}
 
