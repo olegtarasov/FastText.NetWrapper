@@ -71,6 +71,9 @@ namespace FastText.NetWrapper
 
         [DllImport(FastTextDll)]
         private static extern void LoadModel(IntPtr hPtr, string path);
+
+        [DllImport(FastTextDll)]
+        private static extern void LoadModelData(IntPtr hPtr, byte[] data, long length);
         
         [DllImport(FastTextDll)]
         private static extern int GetMaxLabelLength(IntPtr hPtr);

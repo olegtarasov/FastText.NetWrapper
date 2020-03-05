@@ -41,6 +41,17 @@ namespace FastText.NetWrapper
 		}
 
 		/// <summary>
+		/// Loads a trained model from a byte array.
+		/// </summary>
+		/// <param name="bytes">Bytes array containing the model (.bin file).</param>
+		public void LoadModel(byte[] bytes)
+		{
+			LoadModelData(_fastText, bytes, bytes.Length);
+			_maxLabelLen = GetMaxLabelLength(_fastText);
+			_modelLoaded = true;
+		}
+
+		/// <summary>
 		/// Loads a trained model from a file.
 		/// </summary>
 		/// <param name="path">Path to a model (.bin file).</param>

@@ -41,7 +41,7 @@ namespace TestUtil
                 }
                 else
                 {
-                    fastText.LoadModel(args[1]);
+                    fastText.LoadModel(File.ReadAllBytes(args[1]));
                     TestNN(fastText);
                 }
             }
