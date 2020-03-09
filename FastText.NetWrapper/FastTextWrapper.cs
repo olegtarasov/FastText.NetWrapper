@@ -86,9 +86,9 @@ namespace FastText.NetWrapper
 		}
 
 		/// <summary>
-		/// Calculate nearest neighbor from input text.
+		/// Calculate nearest neighbors from input text.
 		/// </summary>
-		/// <param name="text">Text to calculating the nearest neighbor from.</param>
+		/// <param name="text">Text to calculate nearest neighbors from.</param>
 		/// <param name="number">Number of neighbors.</param>
 		/// <returns>Nearest neighbor predictions.</returns>
 		public unsafe Prediction[] GetNN(string text, int number)

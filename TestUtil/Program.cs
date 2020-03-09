@@ -10,7 +10,8 @@ namespace TestUtil
 {
     class Program
     {
-        private static string Usage = $"Usage: tesutil [train|trainlowlevel|load] train_file model_file{Environment.NewLine}Usage: tesutil nn model_file";
+        private static string Usage = "Usage: tesutil [train|trainlowlevel|load] train_file model_file\n" +
+                                      "Usage: testutil nn model_file";
         
         static void Main(string[] args)
         {
@@ -78,7 +79,7 @@ namespace TestUtil
 
         private static void TestNN(FastTextWrapper fastText)
         {
-            fastText.GetNN("train", 5);
+            var predictions = fastText.GetNN("train", 5);
         }
     }
 }
