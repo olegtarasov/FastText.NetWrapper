@@ -71,12 +71,18 @@ namespace FastText.NetWrapper
 
         [DllImport(FastTextDll)]
         private static extern void LoadModel(IntPtr hPtr, string path);
+
+        [DllImport(FastTextDll)]
+        private static extern void LoadModelData(IntPtr hPtr, byte[] data, long length);
         
         [DllImport(FastTextDll)]
-        private static extern int GetMaxLabelLenght(IntPtr hPtr);
+        private static extern int GetMaxLabelLength(IntPtr hPtr);
 
         [DllImport(FastTextDll)]
         private static extern int GetLabels(IntPtr hPtr, IntPtr labels);
+
+        [DllImport(FastTextDll)]
+        private static extern int GetNN(IntPtr hPtr, byte[] input, IntPtr predictedLabels, float[] predictedProbabilities, int n);
         
         [DllImport(FastTextDll)]
         private static extern float PredictSingle(IntPtr hPtr, byte[] input, IntPtr predicted);

@@ -19,11 +19,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FastText.Native.Linux" Version="1.0.73" />
-    <PackageReference Include="FastText.Native.MacOs" Version="1.0.74" />
-    <PackageReference Include="FastText.Native.Windows" Version="1.0.72" />
-    <PackageReference Include="LibLog" Version="5.0.6" />
-    <PackageReference Include="NativeLibraryManager" Version="1.0.14" />
+    <PackageReference Include="FastText.Native.Linux" Version="1.0.84" />
+    <PackageReference Include="FastText.Native.MacOs" Version="1.0.84" />
+    <PackageReference Include="FastText.Native.Windows" Version="1.0.84" />
+    <PackageReference Include="LibLog" Version="5.0.8" />
+    <PackageReference Include="NativeLibraryManager" Version="1.0.18" />
   </ItemGroup>
 
 </Project>
