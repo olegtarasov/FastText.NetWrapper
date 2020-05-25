@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FastText.NetWrapper", "Fast
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestUtil", "TestUtil\TestUtil.csproj", "{4530C4C1-77DC-44DB-8199-3B0BAE6E4656}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{3FA348A3-6438-4E0D-A80C-19C6FD82A5BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,10 @@ Global
 		{4530C4C1-77DC-44DB-8199-3B0BAE6E4656}.Debug|x64.Build.0 = Debug|Any CPU
 		{4530C4C1-77DC-44DB-8199-3B0BAE6E4656}.Release|x64.ActiveCfg = Release|Any CPU
 		{4530C4C1-77DC-44DB-8199-3B0BAE6E4656}.Release|x64.Build.0 = Release|Any CPU
+		{3FA348A3-6438-4E0D-A80C-19C6FD82A5BC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3FA348A3-6438-4E0D-A80C-19C6FD82A5BC}.Debug|x64.Build.0 = Debug|Any CPU
+		{3FA348A3-6438-4E0D-A80C-19C6FD82A5BC}.Release|x64.ActiveCfg = Release|Any CPU
+		{3FA348A3-6438-4E0D-A80C-19C6FD82A5BC}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

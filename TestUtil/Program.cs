@@ -79,7 +79,7 @@ namespace TestUtil
 
         private static void TestNN(FastTextWrapper fastText)
         {
-            var predictions = fastText.GetNN("train", 5);
+            var predictions = fastText.GetNN("pokepot", 5);
         }
     }
 }

@@ -1,4 +1,8 @@
-﻿namespace FastText.NetWrapper
+﻿using System;
+using System.Runtime.InteropServices;
+using AutoMapper;
+
+namespace FastText.NetWrapper
 {
     /// <summary>
     /// FastText model.
@@ -27,38 +31,67 @@
     /// </summary>
     public class FastTextArgs
     {
-        /// <summary>
-        /// This constructor mirrors the default values from
-        /// https://github.com/facebookresearch/fastText/blob/0a5759475265705b485fa9fae4d1186d248049aa/src/args.cc#L18
-        /// </summary>
-        public FastTextArgs()
+        #region Args
+
+        [DllImport(FastTextWrapper.FastTextDll)]
+        private static extern void GetDefaultArgs(IntPtr args);
+        
+        [DllImport(FastTextWrapper.FastTextDll)]
+        private static extern void GetDefaultSupervisedArgs(IntPtr args);
+        
+        [DllImport(FastTextWrapper.FastTextDll)]
+        private static extern void DestroyArgs(IntPtr args);
+
+        #endregion
+
+        private static readonly IMapper Mapper;
+
+        static FastTextArgs()
         {
-            lr = 0.05;
-            dim = 100;
-            ws = 5;
-            epoch = 5;
-            minCount = 5;
-            minCountLabel = 0;
-            neg = 5;
-            wordNgrams = 1;
-            loss = LossName.NegativeSampling;
-            model = ModelName.SkipGram;
-            bucket = 2000000;
-            minn = 3;
-            maxn = 6;
-            thread = 12;
-            lrUpdateRate = 100;
-            t = 1e-4;
-            verbose = 2;
-            saveOutput = false;
+            Mapper = new MapperConfiguration(config =>
+            {
+                config.CreateMap<FastTextWrapper.FastTextArgsStruct, FastTextArgs>();
+            }).CreateMapper();
+        }
+        
+        /// <summary>
+        /// This constructor gets values from
+        /// https://github.com/olegtarasov/fastText/blob/b0a32d744f4d16d8f9834649f6f178ff79b5a4ce/src/fasttext_api.cc#L12
+        /// </summary>
+        public unsafe FastTextArgs() : this(false)
+        {
+            FastTextWrapper.FastTextArgsStruct* argsPtr;
 
-            qout = false;
-            retrain = false;
-            qnorm = false;
-            cutoff = 0;
-            dsub = 2;
+            GetDefaultArgs(new IntPtr(&argsPtr));
 
+            Mapper.Map(*argsPtr, this);
+            
+            DestroyArgs(new IntPtr(argsPtr));
+        }
+
+        private FastTextArgs(bool dummy)
+        {
             LabelPrefix = "__label__";
+        }
+
+        /// <summary>
+        /// Returns the same supervised args defaults as in
+        /// https://github.com/olegtarasov/fastText/blob/b0a32d744f4d16d8f9834649f6f178ff79b5a4ce/src/fasttext_api.cc#L41
+        /// </summary>
+        /// <returns></returns>
+        public static unsafe FastTextArgs SupervisedDefaults()
+        {
+            var result = new FastTextArgs(false);
+            
+            FastTextWrapper.FastTextArgsStruct* argsPtr;
+
+            GetDefaultSupervisedArgs(new IntPtr(&argsPtr));
+
+            Mapper.Map(*argsPtr, result);
+            
+            DestroyArgs(new IntPtr(argsPtr));
+
+            return result;
         }
 
         public double lr {get; set;}
@@ -79,6 +112,7 @@
         public double t {get; set;}
         public int verbose {get; set;}
         public bool saveOutput {get; set;}
+        public int seed { get; set; }
         public bool qout {get; set;}
         public bool retrain {get; set;}
         public bool qnorm {get; set;}

@@ -6,10 +6,11 @@ namespace FastText.NetWrapper
 {
     public partial class FastTextWrapper
     {
-        private const string FastTextDll = "fasttext";
+        internal const string FastTextDll = "fasttext";
 
-        private enum model_name : int { cbow = 1, sg, sup };
-        private enum loss_name : int { hs = 1, ns, softmax, ova };
+        internal enum model_name : int { cbow = 1, sg, sup };
+
+        internal enum loss_name : int { hs = 1, ns, softmax, ova };
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         private struct SupervisedArgsStruct
@@ -24,7 +25,7 @@ namespace FastText.NetWrapper
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        private struct TrainingArgsStruct
+        internal struct FastTextArgsStruct
         {
             public double lr;
             public int lrUpdateRate;
@@ -44,6 +45,7 @@ namespace FastText.NetWrapper
             public double t;
             public int verbose;
             public bool saveOutput;
+            public int seed;
             public bool qout;
             public bool retrain;
             public bool qnorm;
@@ -51,12 +53,24 @@ namespace FastText.NetWrapper
             public ulong dsub;
         }
 
+        #region Model management
+        
         [DllImport(FastTextDll)]
         private static extern IntPtr CreateFastText();
+        
+        [DllImport(FastTextDll)]
+        private static extern void LoadModel(IntPtr hPtr, string path);
+
+        [DllImport(FastTextDll)]
+        private static extern void LoadModelData(IntPtr hPtr, byte[] data, long length);
 
         [DllImport(FastTextDll)]
         private static extern void DestroyFastText(IntPtr hPtr);
-
+        
+        #endregion
+        
+        #region Resource management
+        
         [DllImport(FastTextDll)]
         private static extern void DestroyString(IntPtr str);
 
@@ -64,36 +78,51 @@ namespace FastText.NetWrapper
         private static extern void DestroyStrings(IntPtr strings, int cnt);
 
         [DllImport(FastTextDll)]
-        private static extern void TrainSupervised(IntPtr hPtr, string input, string output, SupervisedArgsStruct args, string labelPrefix);
-
-        [DllImport(FastTextDll)]
-        private static extern void Train(IntPtr hPtr, string input, string output, TrainingArgsStruct args, string labelPrefix, string pretrainedVectors);
-
-        [DllImport(FastTextDll)]
-        private static extern void LoadModel(IntPtr hPtr, string path);
-
-        [DllImport(FastTextDll)]
-        private static extern void LoadModelData(IntPtr hPtr, byte[] data, long length);
+        private static  extern  void DestroyVector(IntPtr vector);
         
+        #endregion
+
+        #region Label info
+
         [DllImport(FastTextDll)]
         private static extern int GetMaxLabelLength(IntPtr hPtr);
 
         [DllImport(FastTextDll)]
         private static extern int GetLabels(IntPtr hPtr, IntPtr labels);
 
+        #endregion
+
+        #region FastText commands
+
+        [DllImport(FastTextDll)]
+        private static extern void Supervised(IntPtr hPtr, string input, string output, FastTextArgsStruct trainArgs, string labelPrefix, string pretrainedVectors);
+        
         [DllImport(FastTextDll)]
         private static extern int GetNN(IntPtr hPtr, byte[] input, IntPtr predictedLabels, float[] predictedProbabilities, int n);
+
+        [DllImport(FastTextDll)]
+        private static extern  int GetSentenceVector(IntPtr hPtr, byte[] input, IntPtr vector);
         
+        #endregion
+
+        #region Predictions
+
         [DllImport(FastTextDll)]
         private static extern float PredictSingle(IntPtr hPtr, byte[] input, IntPtr predicted);
 
         [DllImport(FastTextDll)]
         private static extern int PredictMultiple(IntPtr hPtr, byte[] input, IntPtr predictedLabels, float[] predictedProbabilities, int n);
 
+        #endregion
+        
+        #region Deprecated
+        
         [DllImport(FastTextDll)]
-        private static extern  int GetSentenceVector(IntPtr hPtr, byte[] input, IntPtr vector);
+        private static extern void TrainSupervised(IntPtr hPtr, string input, string output, SupervisedArgsStruct args, string labelPrefix);
 
         [DllImport(FastTextDll)]
-        private static  extern  void DestroyVector(IntPtr vector);
+        private static extern void Train(IntPtr hPtr, string input, string output, FastTextArgsStruct args, string labelPrefix, string pretrainedVectors);
+        
+        #endregion
     }
 }

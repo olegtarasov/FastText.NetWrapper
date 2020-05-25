@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
-using FastText.NetWrapper.Logging;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
 using NativeLibraryManager;
 
 namespace FastText.NetWrapper
@@ -13,9 +15,10 @@ namespace FastText.NetWrapper
 	/// </summary>
 	public partial class FastTextWrapper : IDisposable
 	{
-		private static readonly ILog _log = LogProvider.For<FastTextWrapper>();
 		private static readonly Encoding _utf8 = Encoding.UTF8;
 
+		private readonly IMapper _mapper;
+		
 		private IntPtr _fastText;
 		private bool _modelLoaded = false;
 		private int _maxLabelLen;
@@ -23,21 +26,48 @@ namespace FastText.NetWrapper
 		/// <summary>
 		/// Ctor.
 		/// </summary>
-		public FastTextWrapper()
+		/// <param name="useBundledLibrary">
+		/// If <code>true</code>, a bundled copy of fastText binary is extracted to process' current directory.
+		/// You can set this to <code>false</code>, but then you must ensure that a compatible binary for your
+		/// platform is discoverable by system library loader.
+		/// 
+		/// You can compile your own binary from this specific fork: https://github.com/olegtarasov/fastText.
+		/// </param>
+		/// <param name="loggerFactory">Optional logger factory.</param>
+		public FastTextWrapper(bool useBundledLibrary = true, ILoggerFactory loggerFactory = null)
 		{
-			var accessor = new ResourceAccessor(Assembly.GetExecutingAssembly());
-			var manager = new LibraryManager(
-				Assembly.GetExecutingAssembly(),
-				new LibraryItem(Platform.Windows, Bitness.x64,
-					new LibraryFile("fasttext.dll", accessor.Binary("Resources.fasttext.dll"))),
-				new LibraryItem(Platform.MacOs, Bitness.x64,
-					new LibraryFile("libfasttext.dylib", accessor.Binary("Resources.libfasttext.dylib"))),
-				new LibraryItem(Platform.Linux, Bitness.x64,
-					new LibraryFile("libfasttext.so", accessor.Binary("Resources.libfasttext.so"))));
+			if (useBundledLibrary)
+			{
+				var accessor = new ResourceAccessor(Assembly.GetExecutingAssembly());
+				var manager = new LibraryManager(
+					loggerFactory,
+					new LibraryItem(Platform.Windows, Bitness.x64,
+						new LibraryFile("fasttext.dll", accessor.Binary("Resources.fasttext.dll"))),
+					new LibraryItem(Platform.MacOs, Bitness.x64,
+						new LibraryFile("libfasttext.dylib", accessor.Binary("Resources.libfasttext.dylib"))),
+					new LibraryItem(Platform.Linux, Bitness.x64,
+						new LibraryFile("libfasttext.so", accessor.Binary("Resources.libfasttext.so"))));
+
+				manager.LoadNativeLibrary();
+			}
 			
-			manager.LoadNativeLibrary();
-			
+			_mapper = new MapperConfiguration(config => config.CreateMap<FastTextArgs, FastTextArgsStruct>())
+				.CreateMapper();
+
 			_fastText = CreateFastText();
+		}
+
+		#region Model management
+
+		/// <summary>
+		/// Loads a trained model from a file.
+		/// </summary>
+		/// <param name="path">Path to a model (.bin file).</param>
+		public void LoadModel(string path)
+		{
+			LoadModel(_fastText, path);
+			_maxLabelLen = GetMaxLabelLength(_fastText);
+			_modelLoaded = true;
 		}
 
 		/// <summary>
@@ -50,17 +80,10 @@ namespace FastText.NetWrapper
 			_maxLabelLen = GetMaxLabelLength(_fastText);
 			_modelLoaded = true;
 		}
+		
+		#endregion
 
-		/// <summary>
-		/// Loads a trained model from a file.
-		/// </summary>
-		/// <param name="path">Path to a model (.bin file).</param>
-		public void LoadModel(string path)
-		{
-			LoadModel(_fastText, path);
-			_maxLabelLen = GetMaxLabelLength(_fastText);
-			_modelLoaded = true;
-		}
+		#region Label info
 
 		/// <summary>
 		/// Gets all labels that classifier was trained on.
@@ -83,6 +106,30 @@ namespace FastText.NetWrapper
 			DestroyStrings(labelsPtr, numLabels);
 
 			return result;
+		}
+		
+		#endregion
+
+		#region FastText commands
+
+		/// <summary>
+		/// Trains a new supervised model.
+		/// Use <see cref="FastTextArgs.SupervisedDefaults"/> to get reasonable default args for
+		/// supervised training.
+		/// </summary>
+		/// <param name="inputPath">Path to a training set.</param>
+		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
+		/// <param name="args">Low-level training arguments.</param>
+		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+		public void Supervised(string inputPath, string outputPath, FastTextArgs args)
+		{
+			ValidatePaths(inputPath, outputPath, args.PretrainedVectors);
+
+			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
+			argsStruct.model = model_name.sup;
+			Supervised(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors);
+			_maxLabelLen = GetMaxLabelLength(_fastText);
+			_modelLoaded = true;
 		}
 
 		/// <summary>
@@ -112,6 +159,34 @@ namespace FastText.NetWrapper
 
 			return result;
 		}
+
+		/// <summary>
+		/// Vectorizes a sentence.
+		/// </summary>
+		/// <param name="text">Sentence to vectorize.</param>
+		/// <returns>A single averaged vector.</returns>
+		public unsafe float[] GetSentenceVector(string text)
+		{
+			CheckModelLoaded();
+			
+			IntPtr vecPtr;
+			int dim = GetSentenceVector(_fastText, _utf8.GetBytes(text), new IntPtr(&vecPtr));
+
+			var result = new float[dim];
+			long sz = sizeof(float) * dim;
+			fixed (void* resPtr = &result[0])
+			{
+				Buffer.MemoryCopy(vecPtr.ToPointer(), resPtr, sz, sz);
+			}
+
+			DestroyVector(vecPtr);
+
+			return result;
+		}
+
+		#endregion
+
+		#region Predictions
 
 		/// <summary>
 		/// Predicts a single label from input text.
@@ -161,29 +236,9 @@ namespace FastText.NetWrapper
 			return result;
 		}
 
-		/// <summary>
-		/// Vectorizes a sentence.
-		/// </summary>
-		/// <param name="text">Sentence to vectorize.</param>
-		/// <returns>A single averaged vector.</returns>
-		public unsafe float[] GetSentenceVector(string text)
-		{
-			CheckModelLoaded();
-			
-			IntPtr vecPtr;
-			int dim = GetSentenceVector(_fastText, _utf8.GetBytes(text), new IntPtr(&vecPtr));
+		#endregion
 
-			var result = new float[dim];
-			long sz = sizeof(float) * dim;
-			fixed (void* resPtr = &result[0])
-			{
-				Buffer.MemoryCopy(vecPtr.ToPointer(), resPtr, sz, sz);
-			}
-
-			DestroyVector(vecPtr);
-
-			return result;
-		}
+		#region Deprecated
 
 		/// <summary>
 		/// Trains a new supervised classification model.
@@ -192,6 +247,7 @@ namespace FastText.NetWrapper
 		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
 		/// <param name="args">Training arguments.</param>
 		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+		[Obsolete("This method is deprecated and will be removed in v. 1.1. Use `Train` overload with `FastTextArgs`.")]
 		public void Train(string inputPath, string outputPath, SupervisedArgs args)
 		{
 			ValidatePaths(inputPath, outputPath, null);
@@ -219,43 +275,45 @@ namespace FastText.NetWrapper
 		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
 		/// <param name="args">Low-level training arguments.</param>
 		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+		[Obsolete("This method is obsolete. Use one of the new methods: Supervised")]
 		public void Train(string inputPath, string outputPath, FastTextArgs args)
 		{
 			ValidatePaths(inputPath, outputPath, args.PretrainedVectors);
 
-			var argsStruct = new TrainingArgsStruct
+			var argsStruct = new FastTextArgsStruct
 							{
-								bucket = args.bucket,
-								cutoff = args.cutoff,
-								dim = args.dim,
-								dsub = args.dsub,
-								epoch = args.epoch,
-
-								loss = (loss_name)args.loss,
 								lr = args.lr,
 								lrUpdateRate = args.lrUpdateRate,
-								maxn = args.maxn,
+								dim = args.dim,
+								ws = args.ws,
+								epoch = args.epoch,
 								minCount = args.minCount,
 								minCountLabel = args.minCountLabel,
-								minn = args.minn,
-								model = (model_name)args.model,
 								neg = args.neg,
-
-								qnorm = args.qnorm,
+								wordNgrams = args.wordNgrams,
+								loss = (loss_name)args.loss,
+								model = (model_name)args.model,
+								bucket = args.bucket,
+								minn = args.minn,
+								maxn = args.maxn,
+								thread = args.thread,
+								t = args.t,
+								verbose = args.verbose,
+								saveOutput = args.saveOutput,
+								seed = args.seed,
 								qout = args.qout,
 								retrain = args.retrain,
-								saveOutput = args.saveOutput,
-								t = args.t,
-								thread = args.thread,
-								verbose = args.verbose,
-								wordNgrams = args.wordNgrams,
-								ws = args.ws,
+								qnorm = args.qnorm,
+								cutoff = args.cutoff,
+								dsub = args.dsub,
 							};
 
 			Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors);
 			_maxLabelLen = GetMaxLabelLength(_fastText);
 			_modelLoaded = true;
 		}
+
+		#endregion
 
 		/// <inheritdoc />
 		public void Dispose()
