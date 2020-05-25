@@ -78,7 +78,7 @@ namespace UnitTests
         {
             var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             string outPath = Path.Combine(_tempDir, "cooking");
-            fastText.Train("cooking.train.txt",  outPath, new FastTextArgs());
+            fastText.Train("cooking.train.txt",  outPath, FastTextArgs.SupervisedDefaults());
 
             CheckLabels(fastText.GetLabels());
 
