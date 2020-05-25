@@ -177,7 +177,7 @@ namespace UnitTests
             pred.Label.Should().Be("__label__оператор");
 
             var sourceWords = File.ReadAllText("data.rus.txt")
-                .Split(new[] {" ", "\r\n"}, StringSplitOptions.RemoveEmptyEntries)
+                .Split(new[] {" ", "\r\n", "\n"}, StringSplitOptions.RemoveEmptyEntries)
                 .Where(x => !x.StartsWith("__label__"))
                 .Distinct().ToArray();
             var nn = fastText.GetNN("оператор", 2);
