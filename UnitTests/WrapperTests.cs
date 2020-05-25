@@ -170,7 +170,7 @@ namespace UnitTests
             pred.Probability.Should().BeGreaterThan(0);
             pred.Label.Should().Be("__label__оператор");
 
-            var sourceWords = File.ReadAllText("data.rus.txt").Split(" ");
+            var sourceWords = File.ReadAllText("data.rus.txt").Split(' ', '\n').Where(x => !x.StartsWith("__label__")).Distinct().ToArray();
             var nn = fastText.GetNN("оператор", 2);
             nn.Length.Should().Be(2);
             sourceWords.Should().Contain(nn.Select(x => x.Label));
