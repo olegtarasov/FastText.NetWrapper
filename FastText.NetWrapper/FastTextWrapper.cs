@@ -291,34 +291,7 @@ namespace FastText.NetWrapper
 		{
 			ValidatePaths(inputPath, outputPath, args.PretrainedVectors);
 
-			var argsStruct = new FastTextArgsStruct
-							{
-								lr = args.lr,
-								lrUpdateRate = args.lrUpdateRate,
-								dim = args.dim,
-								ws = args.ws,
-								epoch = args.epoch,
-								minCount = args.minCount,
-								minCountLabel = args.minCountLabel,
-								neg = args.neg,
-								wordNgrams = args.wordNgrams,
-								loss = (loss_name)args.loss,
-								model = (model_name)args.model,
-								bucket = args.bucket,
-								minn = args.minn,
-								maxn = args.maxn,
-								thread = args.thread,
-								t = args.t,
-								verbose = args.verbose,
-								saveOutput = args.saveOutput,
-								seed = args.seed,
-								qout = args.qout,
-								retrain = args.retrain,
-								qnorm = args.qnorm,
-								cutoff = args.cutoff,
-								dsub = args.dsub,
-							};
-
+			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
 			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors));
 			_maxLabelLen = GetMaxLabelLength(_fastText);
 		}
