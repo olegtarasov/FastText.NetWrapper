@@ -275,7 +275,7 @@ namespace FastText.NetWrapper
 								Threads = args.Threads ?? 0
 							};
 
-			TrainSupervised(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix);
+			CheckForErrors(TrainSupervised(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix));
 			_maxLabelLen = GetMaxLabelLength(_fastText);
 		}
 
@@ -319,7 +319,7 @@ namespace FastText.NetWrapper
 								dsub = args.dsub,
 							};
 
-			Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors);
+			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors));
 			_maxLabelLen = GetMaxLabelLength(_fastText);
 		}
 

@@ -131,10 +131,10 @@ namespace FastText.NetWrapper
         #region Deprecated
         
         [DllImport(FastTextDll)]
-        private static extern void TrainSupervised(IntPtr hPtr, string input, string output, SupervisedArgsStruct args, string labelPrefix);
+        private static extern int TrainSupervised(IntPtr hPtr, string input, string output, SupervisedArgsStruct args, string labelPrefix);
 
         [DllImport(FastTextDll)]
-        private static extern void Train(IntPtr hPtr, string input, string output, FastTextArgsStruct args, string labelPrefix, string pretrainedVectors);
+        private static extern int Train(IntPtr hPtr, string input, string output, FastTextArgsStruct args, string labelPrefix, string pretrainedVectors);
         
         #endregion
     }
