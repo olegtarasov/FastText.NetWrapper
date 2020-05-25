@@ -1,6 +1,6 @@
-[![Build status](https://img.shields.io/appveyor/ci/olegtarasov/fasttext-netwrapper.svg?logo=appveyor)](https://ci.appveyor.com/project/olegtarasov/fasttext-netwrapper/branch/master)
-[![Nuget](https://img.shields.io/nuget/v/FastText.NetWrapper.svg?logo=nuget)](https://www.nuget.org/packages/FastText.NetWrapper)
-![Supported platforms](https://img.shields.io/badge/platforms-Windows%2C%20Linux%2C%20MacOs-blue.svg)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/olegtarasov/FastText.NetWrapper/Build%20and%20publish?style=flat-square)](https://github.com/olegtarasov/FastText.NetWrapper/actions)
+[![Nuget](https://img.shields.io/nuget/v/FastText.NetWrapper?style=flat-square)](https://www.nuget.org/packages/FastText.NetWrapper)
+[![Donwloads](https://img.shields.io/nuget/dt/FastText.NetWrapper?label=Nuget&style=flat-square)](https://www.nuget.org/packages/FastText.NetWrapper)
 
 # FastText.NetWrapper
 
