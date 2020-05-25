@@ -5,8 +5,6 @@ VisualStudioVersion = 16.0.28922.388
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FastText.NetWrapper", "FastText.NetWrapper\FastText.NetWrapper.csproj", "{E9BCD9F6-D9D9-4F12-B440-6B65585106B0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestUtil", "TestUtil\TestUtil.csproj", "{4530C4C1-77DC-44DB-8199-3B0BAE6E4656}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{3FA348A3-6438-4E0D-A80C-19C6FD82A5BC}"
 EndProject
 Global
@@ -19,10 +17,6 @@ Global
 		{E9BCD9F6-D9D9-4F12-B440-6B65585106B0}.Debug|x64.Build.0 = Debug|Any CPU
 		{E9BCD9F6-D9D9-4F12-B440-6B65585106B0}.Release|x64.ActiveCfg = Release|Any CPU
 		{E9BCD9F6-D9D9-4F12-B440-6B65585106B0}.Release|x64.Build.0 = Release|Any CPU
-		{4530C4C1-77DC-44DB-8199-3B0BAE6E4656}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{4530C4C1-77DC-44DB-8199-3B0BAE6E4656}.Debug|x64.Build.0 = Debug|Any CPU
-		{4530C4C1-77DC-44DB-8199-3B0BAE6E4656}.Release|x64.ActiveCfg = Release|Any CPU
-		{4530C4C1-77DC-44DB-8199-3B0BAE6E4656}.Release|x64.Build.0 = Release|Any CPU
 		{3FA348A3-6438-4E0D-A80C-19C6FD82A5BC}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{3FA348A3-6438-4E0D-A80C-19C6FD82A5BC}.Debug|x64.Build.0 = Debug|Any CPU
 		{3FA348A3-6438-4E0D-A80C-19C6FD82A5BC}.Release|x64.ActiveCfg = Release|Any CPU

@@ -53,16 +53,23 @@ namespace FastText.NetWrapper
             public ulong dsub;
         }
 
+        #region Errors
+
+        [DllImport(FastTextDll)]
+        private static extern void GetLastErrorText(IntPtr error);
+
+        #endregion
+        
         #region Model management
         
         [DllImport(FastTextDll)]
         private static extern IntPtr CreateFastText();
         
         [DllImport(FastTextDll)]
-        private static extern void LoadModel(IntPtr hPtr, string path);
+        private static extern int LoadModel(IntPtr hPtr, string path);
 
         [DllImport(FastTextDll)]
-        private static extern void LoadModelData(IntPtr hPtr, byte[] data, long length);
+        private static extern int LoadModelData(IntPtr hPtr, byte[] data, long length);
 
         [DllImport(FastTextDll)]
         private static extern void DestroyFastText(IntPtr hPtr);
@@ -90,18 +97,24 @@ namespace FastText.NetWrapper
         [DllImport(FastTextDll)]
         private static extern int GetLabels(IntPtr hPtr, IntPtr labels);
 
+        [DllImport(FastTextDll)]
+        private static extern bool IsModelReady(IntPtr hPtr);
+        
+        [DllImport(FastTextDll)]
+        private static extern int GetModelDimension(IntPtr hPtr);
+
         #endregion
 
         #region FastText commands
 
         [DllImport(FastTextDll)]
-        private static extern void Supervised(IntPtr hPtr, string input, string output, FastTextArgsStruct trainArgs, string labelPrefix, string pretrainedVectors);
+        private static extern int Supervised(IntPtr hPtr, string input, string output, FastTextArgsStruct trainArgs, string labelPrefix, string pretrainedVectors);
         
         [DllImport(FastTextDll)]
         private static extern int GetNN(IntPtr hPtr, byte[] input, IntPtr predictedLabels, float[] predictedProbabilities, int n);
 
         [DllImport(FastTextDll)]
-        private static extern  int GetSentenceVector(IntPtr hPtr, byte[] input, IntPtr vector);
+        private static extern int GetSentenceVector(IntPtr hPtr, byte[] input, IntPtr vector);
         
         #endregion
 

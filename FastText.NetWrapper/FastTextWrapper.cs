@@ -20,7 +20,6 @@ namespace FastText.NetWrapper
 		private readonly IMapper _mapper;
 		
 		private IntPtr _fastText;
-		private bool _modelLoaded = false;
 		private int _maxLabelLen;
 
 		/// <summary>
@@ -65,9 +64,8 @@ namespace FastText.NetWrapper
 		/// <param name="path">Path to a model (.bin file).</param>
 		public void LoadModel(string path)
 		{
-			LoadModel(_fastText, path);
-			_maxLabelLen = GetMaxLabelLength(_fastText);
-			_modelLoaded = true;
+			CheckForErrors(LoadModel(_fastText, path));
+			_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
 		}
 
 		/// <summary>
@@ -76,14 +74,13 @@ namespace FastText.NetWrapper
 		/// <param name="bytes">Bytes array containing the model (.bin file).</param>
 		public void LoadModel(byte[] bytes)
 		{
-			LoadModelData(_fastText, bytes, bytes.Length);
-			_maxLabelLen = GetMaxLabelLength(_fastText);
-			_modelLoaded = true;
+			CheckForErrors(LoadModelData(_fastText, bytes, bytes.Length));
+			_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
 		}
 		
 		#endregion
 
-		#region Label info
+		#region Model info
 
 		/// <summary>
 		/// Gets all labels that classifier was trained on.
@@ -94,7 +91,7 @@ namespace FastText.NetWrapper
 			CheckModelLoaded();
 			
 			IntPtr labelsPtr;
-			int numLabels = GetLabels(_fastText, new IntPtr(&labelsPtr));
+			int numLabels = CheckForErrors(GetLabels(_fastText, new IntPtr(&labelsPtr)));
 
 			var result = new string[numLabels];
 			for (int i = 0; i < numLabels; i++)
@@ -106,6 +103,22 @@ namespace FastText.NetWrapper
 			DestroyStrings(labelsPtr, numLabels);
 
 			return result;
+		}
+
+		/// <summary>
+		/// Returns <code>true</code> if a model was trained or loaded and is ready.
+		/// </summary>
+		public bool IsModelReady()
+		{
+			return IsModelReady(_fastText);
+		}
+		
+		/// <summary>
+		/// Gets the vector dimension of the loaded model.
+		/// </summary>
+		public int GetModelDimension()
+		{
+			return GetModelDimension(_fastText);
 		}
 		
 		#endregion
@@ -127,9 +140,8 @@ namespace FastText.NetWrapper
 
 			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
 			argsStruct.model = model_name.sup;
-			Supervised(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors);
-			_maxLabelLen = GetMaxLabelLength(_fastText);
-			_modelLoaded = true;
+			CheckForErrors(Supervised(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors));
+			_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
 		}
 
 		/// <summary>
@@ -145,7 +157,7 @@ namespace FastText.NetWrapper
 			var probs = new float[number];
 			IntPtr labelsPtr;
 
-			int cnt = GetNN(_fastText, _utf8.GetBytes(text), new IntPtr(&labelsPtr), probs, number);
+			int cnt = CheckForErrors(GetNN(_fastText, _utf8.GetBytes(text), new IntPtr(&labelsPtr), probs, number));
 			var result = new Prediction[cnt];
 
 			for (int i = 0; i < cnt; i++)
@@ -170,7 +182,7 @@ namespace FastText.NetWrapper
 			CheckModelLoaded();
 			
 			IntPtr vecPtr;
-			int dim = GetSentenceVector(_fastText, _utf8.GetBytes(text), new IntPtr(&vecPtr));
+			int dim = CheckForErrors(GetSentenceVector(_fastText, _utf8.GetBytes(text), new IntPtr(&vecPtr)));
 
 			var result = new float[dim];
 			long sz = sizeof(float) * dim;
@@ -199,7 +211,7 @@ namespace FastText.NetWrapper
 			CheckModelLabels();
 
 			IntPtr labelPtr;
-			float prob = PredictSingle(_fastText, _utf8.GetBytes(text), new IntPtr(&labelPtr));
+			float prob = CheckForErrors(PredictSingle(_fastText, _utf8.GetBytes(text), new IntPtr(&labelPtr)));
 
 			string label = _utf8.GetString(GetStringBytes(labelPtr));
 			DestroyString(labelPtr);
@@ -221,7 +233,7 @@ namespace FastText.NetWrapper
 			var probs = new float[number];
 			IntPtr labelsPtr;
 
-			int cnt = PredictMultiple(_fastText, _utf8.GetBytes(text), new IntPtr(&labelsPtr), probs, number);
+			int cnt = CheckForErrors(PredictMultiple(_fastText, _utf8.GetBytes(text), new IntPtr(&labelsPtr), probs, number));
 			var result = new Prediction[cnt];
 
 			for (int i = 0; i < cnt; i++)
@@ -265,7 +277,6 @@ namespace FastText.NetWrapper
 
 			TrainSupervised(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix);
 			_maxLabelLen = GetMaxLabelLength(_fastText);
-			_modelLoaded = true;
 		}
 
 		/// <summary>
@@ -310,7 +321,6 @@ namespace FastText.NetWrapper
 
 			Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors);
 			_maxLabelLen = GetMaxLabelLength(_fastText);
-			_modelLoaded = true;
 		}
 
 		#endregion
@@ -327,6 +337,42 @@ namespace FastText.NetWrapper
 			_fastText = IntPtr.Zero;
 		}
 
+		private int CheckForErrors(int result)
+		{
+			if (result != -1)
+			{
+				return result;
+			}
+			
+			ThrowNativeException();
+
+			return -1;
+		}
+		
+		private float CheckForErrors(float result)
+		{
+			if (Math.Abs(result - (-1)) > 10e-5)
+			{
+				return result;
+			}
+			
+			ThrowNativeException();
+
+			return -1;
+		}
+
+		private unsafe void ThrowNativeException()
+		{
+			IntPtr errorPtr;
+			GetLastErrorText(new IntPtr(&errorPtr));
+
+			string error = _utf8.GetString(GetStringBytes(errorPtr));
+			
+			DestroyString(errorPtr);
+			
+			throw new NativeLibraryException(error);
+		}
+
 		private void CheckModelLabels()
 		{
 			if (_maxLabelLen == 0)
@@ -337,9 +383,9 @@ namespace FastText.NetWrapper
 		
 		private void CheckModelLoaded()
 		{
-			if (!_modelLoaded)
+			if (!IsModelReady())
 			{
-				throw new InvalidOperationException("Model not loaded!");
+				throw new InvalidOperationException("Model not ready! Train a new model or load an existing one.");
 			}
 		}
 		

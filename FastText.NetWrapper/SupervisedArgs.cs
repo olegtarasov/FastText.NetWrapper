@@ -2,7 +2,7 @@
 
 namespace FastText.NetWrapper
 {
-    [Obsolete("This class is deprecated and will be removed in v. 1.1. Use `Train` overload with `FastTextArgs`.")]
+    [Obsolete("This class is deprecated and will be removed in v. 1.1. Use `Supervised` overload with `FastTextArgs`.")]
     public class TrainingArgs : SupervisedArgs
     {
     }
@@ -10,7 +10,7 @@ namespace FastText.NetWrapper
     /// <summary>
     /// FastText training arguments.
     /// </summary>
-    [Obsolete("This class is deprecated and will be removed in v. 1.1. Use `Train` overload with `FastTextArgs`.")]
+    [Obsolete("This class is deprecated and will be removed in v. 1.1. Use `Supervised` overload with `FastTextArgs`.")]
     public class SupervisedArgs
     {
         /// <summary>

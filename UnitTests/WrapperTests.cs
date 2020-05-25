@@ -93,6 +93,9 @@ namespace UnitTests
             string outPath = Path.Combine(_tempDir, "cooking");
             fastText.Supervised("cooking.train.txt",  outPath, FastTextArgs.SupervisedDefaults());
 
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+
             CheckLabels(fastText.GetLabels());
 
             File.Exists(outPath + ".bin").Should().BeTrue();
@@ -104,6 +107,9 @@ namespace UnitTests
         {
             var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             fastText.LoadModel(_fixture.ModelPath);
+            
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
 
             CheckLabels(fastText.GetLabels());
         }
@@ -178,6 +184,49 @@ namespace UnitTests
             {
                 prediction.Probability.Should().BeGreaterThan(0);
             }
+        }
+
+        [Fact]
+        public void EmptyModelIsNotReady()
+        {
+            var fastText = new FastTextWrapper();
+
+            fastText.IsModelReady().Should().BeFalse();
+        }
+
+        [Fact]
+        public void CantUsePretrainedVectorsWithDifferentDimension()
+        {
+            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            
+            string outPath = Path.Combine(_tempDir, "cooking");
+            var args = FastTextArgs.SupervisedDefaults();
+            args.PretrainedVectors = "cooking.unsup.300.vec";
+
+            fastText.Invoking(x => x.Supervised("cooking.train.txt", outPath, args))
+                .Should().Throw<NativeLibraryException>()
+                .WithMessage("Dimension of pretrained vectors (300) does not match dimension (100)!");
+        }
+        
+        [Fact]
+        public void CanUsePretrainedVectorsForSupervisedModel()
+        {
+            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            
+            string outPath = Path.Combine(_tempDir, "cooking");
+            var args = FastTextArgs.SupervisedDefaults();
+            args.PretrainedVectors = "cooking.unsup.300.vec";
+            args.dim = 300;
+
+            fastText.Supervised("cooking.train.txt", outPath, args);
+
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(300);
+            
+            CheckLabels(fastText.GetLabels());
+            
+            File.Exists(outPath + ".bin").Should().BeTrue();
+            File.Exists(outPath + ".vec").Should().BeTrue();
         }
 
         private void CheckLabels(string[] modelLabels)

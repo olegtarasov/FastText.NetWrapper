@@ -18,6 +18,8 @@ namespace UnitTests
             string outPath = Path.Combine(_tempDir, "cooking");
             FastText.Supervised("cooking.train.txt",  outPath, FastTextArgs.SupervisedDefaults());
 
+            FastText.IsModelReady().Should().BeTrue();
+
             ModelPath = outPath + ".bin";
 
             File.Exists(ModelPath).Should().BeTrue();
