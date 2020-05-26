@@ -259,7 +259,7 @@ namespace FastText.NetWrapper
 		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
 		/// <param name="args">Training arguments.</param>
 		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
-		[Obsolete("This method is deprecated and will be removed in v. 1.1. Use `Train` overload with `FastTextArgs`.")]
+		[Obsolete("This method is deprecated and will be removed in v. 1.1. Use the new `Supervised` method.")]
 		public void Train(string inputPath, string outputPath, SupervisedArgs args)
 		{
 			ValidatePaths(inputPath, outputPath, null);
