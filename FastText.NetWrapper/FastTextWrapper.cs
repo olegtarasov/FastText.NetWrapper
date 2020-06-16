@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -244,6 +245,34 @@ namespace FastText.NetWrapper
 			}
 
 			DestroyStrings(labelsPtr, cnt);
+
+			return result;
+		}
+
+		#endregion
+
+		#region Testing
+
+		public unsafe TestResult Test(string inputPath, int k = 1, float threshold = 0.0f)
+		{
+			IntPtr meterPtr;
+			CheckForErrors(Test(_fastText, inputPath, k, threshold, new IntPtr(&meterPtr)));
+
+			var labels = GetLabels();
+			var meter = Marshal.PtrToStructure<TestMeter>(meterPtr);
+			var globalMetrics = new Metrics(Marshal.PtrToStructure<TestMetrics>(meter.Metrics), null);
+			var srcLabelMetrics = new Metrics[meter.Labels];
+
+			for (int i = 0; i < meter.Labels; i++)
+			{
+				var ptr = Marshal.ReadIntPtr(meter.LabelMetrics, i * IntPtr.Size);
+				var testMetrics = Marshal.PtrToStructure<TestMetrics>(ptr);
+				srcLabelMetrics[i] = new Metrics(testMetrics, labels[testMetrics.Label]);
+			}
+			
+			var result = new TestResult(meter, globalMetrics, srcLabelMetrics);
+
+			DestroyMeter(meterPtr);
 
 			return result;
 		}

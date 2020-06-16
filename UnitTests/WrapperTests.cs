@@ -234,6 +234,20 @@ namespace UnitTests
             File.Exists(outPath + ".vec").Should().BeTrue();
         }
 
+        [Fact]
+        public void CanTestSupervisedModel()
+        {
+            _logger.LogInformation("Cur dir: " + Environment.CurrentDirectory);
+            var result = _fixture.FastText.Test("cooking.valid.txt");
+
+            result.Examples.Should().Be(3000);
+            result.GlobalMetrics.Predicted.Should().Be(3000);
+            result.GlobalMetrics.Gold.Should().BeGreaterThan(0);
+            result.GlobalMetrics.Label.Should().BeNull();
+            result.LabelMetrics.Length.Should().BeGreaterThan(0);
+            result.LabelMetrics.Count(x => x.ScoreVsTrue.Length > 0).Should().BeGreaterThan(0);
+        }
+
         private void CheckLabels(string[] modelLabels)
         {
             modelLabels.Length.Should().Be(_labels.Length);

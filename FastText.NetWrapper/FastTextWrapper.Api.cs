@@ -52,6 +52,28 @@ namespace FastText.NetWrapper
             public ulong cutoff;
             public ulong dsub;
         }
+        
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        internal struct TestMetrics
+        {
+            public long Gold;
+            public long Predicted;
+            public long PredictedGold;
+            public int ScoresLen;
+            public int Label;
+            public IntPtr PredictedScores;
+            public IntPtr GoldScores;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        internal struct TestMeter
+        {
+            public long Examples;
+            public long Labels;
+            private IntPtr SourceMeter;
+            public IntPtr Metrics;
+            public IntPtr LabelMetrics;
+        }
 
         #region Errors
 
@@ -125,6 +147,16 @@ namespace FastText.NetWrapper
 
         [DllImport(FastTextDll)]
         private static extern int PredictMultiple(IntPtr hPtr, byte[] input, IntPtr predictedLabels, float[] predictedProbabilities, int n);
+
+        #endregion
+
+        #region Testing
+        
+        [DllImport(FastTextDll)]
+        private static extern int Test(IntPtr hPtr, string input, int k, float threshold, IntPtr meterPtr);
+        
+        [DllImport(FastTextDll)]
+        private static extern int DestroyMeter(IntPtr hPtr);
 
         #endregion
         
