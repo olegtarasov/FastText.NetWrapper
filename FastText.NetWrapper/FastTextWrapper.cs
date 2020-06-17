@@ -270,7 +270,7 @@ namespace FastText.NetWrapper
 				srcLabelMetrics[i] = new Metrics(testMetrics, labels[testMetrics.Label]);
 			}
 			
-			var result = new TestResult(meter, globalMetrics, srcLabelMetrics);
+			var result = new TestResult(meter.Examples, globalMetrics, srcLabelMetrics);
 
 			DestroyMeter(meterPtr);
 

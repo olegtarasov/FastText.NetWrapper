@@ -237,15 +237,17 @@ namespace UnitTests
         [Fact]
         public void CanTestSupervisedModel()
         {
-            _logger.LogInformation("Cur dir: " + Environment.CurrentDirectory);
             var result = _fixture.FastText.Test("cooking.valid.txt");
 
             result.Examples.Should().Be(3000);
             result.GlobalMetrics.Predicted.Should().Be(3000);
             result.GlobalMetrics.Gold.Should().BeGreaterThan(0);
             result.GlobalMetrics.Label.Should().BeNull();
-            result.LabelMetrics.Length.Should().BeGreaterThan(0);
-            result.LabelMetrics.Count(x => x.ScoreVsTrue.Length > 0).Should().BeGreaterThan(0);
+            result.LabelMetrics.Count.Should().BeGreaterThan(0);
+            result.LabelMetrics.Count(x => x.Value.ScoreVsTrue.Length > 0).Should().BeGreaterThan(0);
+
+            var curve = result.GetPrecisionRecallCurve();
+            curve.Length.Should().BeGreaterThan(0);
         }
 
         private void CheckLabels(string[] modelLabels)
