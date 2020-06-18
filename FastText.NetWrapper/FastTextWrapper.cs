@@ -253,10 +253,15 @@ namespace FastText.NetWrapper
 
 		#region Testing
 
-		public unsafe TestResult Test(string inputPath, int k = 1, float threshold = 0.0f)
+		public TestResult Test(string inputPath, int k = 1, float threshold = 0.0f)
+		{
+			return TestInternal(inputPath, k, threshold, false);
+		}
+
+		internal unsafe TestResult TestInternal(string inputPath, int k, float threshold, bool debug)
 		{
 			IntPtr meterPtr;
-			CheckForErrors(Test(_fastText, inputPath, k, threshold, new IntPtr(&meterPtr)));
+			CheckForErrors(Test(_fastText, inputPath, k, threshold, new IntPtr(&meterPtr), debug));
 
 			var labels = GetLabels();
 			var meter = Marshal.PtrToStructure<TestMeter>(meterPtr);

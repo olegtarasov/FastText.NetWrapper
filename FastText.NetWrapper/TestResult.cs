@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace FastText.NetWrapper
@@ -55,10 +56,8 @@ namespace FastText.NetWrapper
             }
             else
                 result.AddRange(LabelMetrics[label].ScoreVsTrue);
-            
-            result.Sort((a, b) => a.Item1.CompareTo(b.Item1));
 
-            return result.ToArray();
+            return result.OrderBy(x => x.Item1).ThenBy(x => x.Item2).ToArray();
         }
 
         /// <summary>
@@ -76,7 +75,7 @@ namespace FastText.NetWrapper
             var lastScore = -2.0;
             var result = new List<(long, long)>();
 
-            for (var i = 0; i < scores.Length; i++)
+            for (var i = scores.Length - 1; i >= 0; i--)
             {
                 double score = scores[i].score;
                 double gold = scores[i].gold;
@@ -179,6 +178,61 @@ namespace FastText.NetWrapper
             }
 
             return bestRecall;
+        }
+
+        internal static (TestResult result, (double precision, double recall)[] curve) LoadDebugResult(string path, string[] labels)
+        {
+            var result = new TestResult {GlobalMetrics = new Metrics(), LabelMetrics = new Dictionary<string, Metrics>()};
+            var curve = new List<(double, double)>();
+            
+            var lines = File.ReadAllLines(path);
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+                if (line == "= g")
+                {
+                    result.Examples = long.Parse(lines[++i]);
+                }
+                else if (line.StartsWith("= c"))
+                {
+                    int cnt = int.Parse(lines[++i]);
+                    for (int j = 0; j < cnt; j++)
+                    {
+                        var parts = lines[++i].Split(';');
+                        curve.Add((double.Parse(parts[0]), double.Parse(parts[1])));
+                    }
+                }
+                else if (line.StartsWith("="))
+                {
+                    int labelIdx = int.Parse(line.Substring(2));
+                    Metrics metrics;
+
+                    if (labelIdx == -1)
+                        metrics = result.GlobalMetrics;
+                    else
+                    {
+                        metrics = new Metrics {Label = labels[labelIdx]};
+                        result.LabelMetrics[labels[labelIdx]] = metrics;
+                    }
+
+                    metrics.Gold = long.Parse(lines[++i]);
+                    metrics.Predicted = long.Parse(lines[++i]);
+                    metrics.PredictedGold = long.Parse(lines[++i]);
+
+                    int cnt = int.Parse(lines[++i]);
+                    metrics.ScoreVsTrue = new (float score, float gold)[cnt];
+
+                    for (int j = 0; j < cnt; j++)
+                    {
+                        var parts = lines[++i].Split(';');
+                        metrics.ScoreVsTrue[j] = (float.Parse(parts[0]), float.Parse(parts[1]));
+                    }
+                }
+                else
+                    continue;
+            }
+
+            return (result, curve.ToArray());
         }
     }
 }

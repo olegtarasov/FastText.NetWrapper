@@ -153,7 +153,7 @@ namespace FastText.NetWrapper
         #region Testing
         
         [DllImport(FastTextDll)]
-        private static extern int Test(IntPtr hPtr, string input, int k, float threshold, IntPtr meterPtr);
+        private static extern int Test(IntPtr hPtr, string input, int k, float threshold, IntPtr meterPtr, bool debug);
         
         [DllImport(FastTextDll)]
         private static extern int DestroyMeter(IntPtr hPtr);

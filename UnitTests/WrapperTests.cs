@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using FastText.NetWrapper;
@@ -237,18 +238,40 @@ namespace UnitTests
         [Fact]
         public void CanTestSupervisedModel()
         {
-            var result = _fixture.FastText.Test("cooking.valid.txt");
+            var result = _fixture.FastText.TestInternal("cooking.valid.txt", 1, 0.0f, true);
+            var (debugResult, debugCurve) = TestResult.LoadDebugResult("_debug.txt", _fixture.FastText.GetLabels());
 
-            result.Examples.Should().Be(3000);
-            result.GlobalMetrics.Predicted.Should().Be(3000);
-            result.GlobalMetrics.Gold.Should().BeGreaterThan(0);
-            result.GlobalMetrics.Label.Should().BeNull();
-            result.LabelMetrics.Count.Should().BeGreaterThan(0);
-            result.LabelMetrics.Count(x => x.Value.ScoreVsTrue.Length > 0).Should().BeGreaterThan(0);
+            result.Examples.Should().Be(debugResult.Examples);
+            AssertMetrics(result.GlobalMetrics, debugResult.GlobalMetrics);
+            result.LabelMetrics.Count.Should().Be(debugResult.LabelMetrics.Count);
+
+            foreach (var metrics in result.LabelMetrics.Values)
+                AssertMetrics(metrics, debugResult.LabelMetrics[metrics.Label]);
 
             var curve = result.GetPrecisionRecallCurve();
-            curve.Length.Should().BeGreaterThan(0);
+            curve.Length.Should().Be(debugCurve.Length);
+
+            for (int i = 0; i < curve.Length; i++)
+            {
+                curve[i].precision.Should().BeApproximately(debugCurve[i].precision, 10e-5);
+                curve[i].recall.Should().BeApproximately(debugCurve[i].recall, 10e-5);
+            }
         }
+
+        private void AssertMetrics(Metrics actual, Metrics expected)
+        {
+            actual.Gold.Should().Be(expected.Gold);
+            actual.Predicted.Should().Be(expected.Predicted);
+            actual.PredictedGold.Should().Be(expected.PredictedGold);
+            actual.ScoreVsTrue.Length.Should().Be(expected.ScoreVsTrue.Length);
+
+            for (int i = 0; i < actual.ScoreVsTrue.Length; i++)
+            {
+                actual.ScoreVsTrue[i].score.Should().BeApproximately(expected.ScoreVsTrue[i].score, 10e-5f);
+                actual.ScoreVsTrue[i].gold.Should().BeApproximately(expected.ScoreVsTrue[i].gold, 10e-5f);
+            }
+        }
+
 
         private void CheckLabels(string[] modelLabels)
         {
