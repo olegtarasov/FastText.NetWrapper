@@ -104,6 +104,22 @@ namespace UnitTests
             File.Exists(outPath + ".bin").Should().BeTrue();
             File.Exists(outPath + ".vec").Should().BeTrue();
         }
+        
+        [Fact]
+        public void CanTrainSupervisedWithNoLogging()
+        {
+            var fastText = new FastTextWrapper();
+            string outPath = Path.Combine(_tempDir, "cooking");
+            fastText.Supervised("cooking.train.txt",  outPath, FastTextArgs.SupervisedDefaults());
+
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+
+            CheckLabels(fastText.GetLabels());
+
+            File.Exists(outPath + ".bin").Should().BeTrue();
+            File.Exists(outPath + ".vec").Should().BeTrue();
+        }
 
         [Fact]
         public void CanLoadSupervisedModel()
