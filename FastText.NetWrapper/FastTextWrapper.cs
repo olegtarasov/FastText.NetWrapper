@@ -19,6 +19,7 @@ namespace FastText.NetWrapper
 		private static readonly Encoding _utf8 = Encoding.UTF8;
 
 		private readonly IMapper _mapper;
+		private readonly ILogger<FastTextWrapper> _logger;
 		
 		private IntPtr _fastText;
 		private int _maxLabelLen;
@@ -36,6 +37,8 @@ namespace FastText.NetWrapper
 		/// <param name="loggerFactory">Optional logger factory.</param>
 		public FastTextWrapper(bool useBundledLibrary = true, ILoggerFactory loggerFactory = null)
 		{
+			_logger = loggerFactory?.CreateLogger<FastTextWrapper>();
+			
 			if (useBundledLibrary)
 			{
 				var accessor = new ResourceAccessor(Assembly.GetExecutingAssembly());
@@ -138,6 +141,11 @@ namespace FastText.NetWrapper
 		public void Supervised(string inputPath, string outputPath, FastTextArgs args)
 		{
 			ValidatePaths(inputPath, outputPath, args.PretrainedVectors);
+
+			if (args.model != ModelName.Supervised)
+			{
+				_logger?.LogWarning($"{args.model} model type specified in a Supervised() call. Model type will be changed to Supervised.");
+			}
 
 			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
 			argsStruct.model = model_name.sup;
