@@ -28,11 +28,11 @@ namespace ConsoleTest
             
             log.Information($"Temp dir: {tempDir}");
 
-            string outPath = Path.Combine(tempDir, "cooking");
+            string outPath = Path.Combine(tempDir, "cooking.bin");
             var fastText = new FastTextWrapper(loggerFactory: new LoggerFactory(new[] {new SerilogLoggerProvider()}));
 
             var ftArgs = FastTextArgs.SupervisedDefaults();
-            ftArgs.epoch = 40;
+            ftArgs.epoch = 15;
             ftArgs.lr = 1;
             ftArgs.dim = 300;
             ftArgs.wordNgrams = 2;
