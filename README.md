@@ -29,7 +29,7 @@ Note the arguments:
 1. We specify an input file with one labeled example per line. Here we use Stack Overflow cooking dataset from Facebook:
 https://dl.fbaipublicfiles.com/fasttext/data/cooking.stackexchange.tar.gz. You can find extracted files split into training
 and validation sets in `UnitTests` directory in this repository.
-2. Your model will be saved to `cooking.bin` and `cooking.vec` with pre-trained vectors will be placed if the same directory.
+2. Your model will be saved to `cooking.bin` and `cooking.vec` with pretrained vectors will be placed if the same directory.
 3. Here we use `FastTextArgs.SupervisedDefaults()` to get default argumets for supervised training. It's a good starting point and is
 the same as calling fastText this way:
 
@@ -46,9 +46,9 @@ var fastText = new FastTextWrapper();
 fastText.LoadModel("model.bin");
 ```
 
-### Using pre-trained vectors
+### Using pretrained vectors
 
-To use pre-trained vectors for your supervised model, do this:
+To use pretrained vectors for your supervised model, do this:
 
 ```c#
 var fastText = new FastTextWrapper();
