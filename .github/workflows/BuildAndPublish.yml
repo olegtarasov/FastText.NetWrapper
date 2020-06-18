@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest] #, windows-latest] # Disabling Windows tests due to random bad allocations on Github Windows images.
     steps:
       - uses: actions/checkout@v2
 
