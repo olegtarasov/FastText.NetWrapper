@@ -107,6 +107,8 @@ using (var stream = new FileStream("precision-recall.svg", FileMode.Create, File
 }
 ```
 
+![](docs/prec-rec.png)
+
 ### Training unsupervised models
 
 Coming soon!
