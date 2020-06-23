@@ -49,7 +49,7 @@ namespace UnitTests
         [Fact]
         public void CanGetDefaultSupervisedArgs()
         {
-            var args = FastTextArgs.SupervisedDefaults();
+            var args = new SupervisedArgs();
             
             args.bucket.Should().Be(2000000);
             args.dim.Should().Be(100);
@@ -61,40 +61,39 @@ namespace UnitTests
             args.lr.Should().BeApproximately(0.1d, 10e-5);
         }
 
-        [Fact]
-        public void CanTrainModelWithSuperOldApi()
-        {
-            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
-            string outPath = Path.Combine(_tempDir, "cooking");
-            fastText.Train("cooking.train.txt",  outPath, new SupervisedArgs());
+        // Deprecated methods removed.
+        // [Fact]
+        // public void CanTrainModelWithSuperOldApi()
+        // {
+        //     var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+        //     string outPath = Path.Combine(_tempDir, "cooking");
+        //     fastText.Train("cooking.train.txt",  outPath, new SupervisedArgs());
+        //
+        //     CheckLabels(fastText.GetLabels());
+        //
+        //     File.Exists(outPath + ".bin").Should().BeTrue();
+        //     File.Exists(outPath + ".vec").Should().BeTrue();
+        // }
 
-            CheckLabels(fastText.GetLabels());
-
-            File.Exists(outPath + ".bin").Should().BeTrue();
-            File.Exists(outPath + ".vec").Should().BeTrue();
-        }
-
-        // Yeah OK, I give up. This test causes bad allocation ONLY on windows during GitHub CI run.
-        // I can't reproduce it anywhere else, every other Windows machine or VM passes this test.
-        [Fact]
-        public void CanTrainModelWithOldApi()
-        {
-            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
-            string outPath = Path.Combine(_tempDir, "cooking");
-            fastText.Train("cooking.train.txt", outPath, FastTextArgs.SupervisedDefaults());
-
-            CheckLabels(fastText.GetLabels());
-
-            File.Exists(outPath + ".bin").Should().BeTrue();
-            File.Exists(outPath + ".vec").Should().BeTrue();
-        }
+        // [Fact]
+        // public void CanTrainModelWithOldApi()
+        // {
+        //     var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+        //     string outPath = Path.Combine(_tempDir, "cooking");
+        //     fastText.Train("cooking.train.txt", outPath, new SupervisedArgs());
+        //
+        //     CheckLabels(fastText.GetLabels());
+        //
+        //     File.Exists(outPath + ".bin").Should().BeTrue();
+        //     File.Exists(outPath + ".vec").Should().BeTrue();
+        // }
 
         [Fact]
         public void CanTrainSupervised()
         {
             var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             string outPath = Path.Combine(_tempDir, "cooking");
-            fastText.Supervised("cooking.train.txt",  outPath, FastTextArgs.SupervisedDefaults());
+            fastText.Supervised("cooking.train.txt",  outPath, new SupervisedArgs());
 
             fastText.IsModelReady().Should().BeTrue();
             fastText.GetModelDimension().Should().Be(100);
@@ -110,7 +109,7 @@ namespace UnitTests
         {
             var fastText = new FastTextWrapper();
             string outPath = Path.Combine(_tempDir, "cooking");
-            fastText.Supervised("cooking.train.txt",  outPath, FastTextArgs.SupervisedDefaults());
+            fastText.Supervised("cooking.train.txt",  outPath, new SupervisedArgs());
 
             fastText.IsModelReady().Should().BeTrue();
             fastText.GetModelDimension().Should().Be(100);
@@ -185,7 +184,7 @@ namespace UnitTests
         {
             var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             string outPath = Path.Combine(_tempDir, "rus");
-            fastText.Supervised("data.rus.txt",  outPath, FastTextArgs.SupervisedDefaults());
+            fastText.Supervised("data.rus.txt",  outPath, new SupervisedArgs());
 
             var labels = fastText.GetLabels();
             labels.Length.Should().Be(2);
@@ -222,7 +221,7 @@ namespace UnitTests
             var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             
             string outPath = Path.Combine(_tempDir, "cooking");
-            var args = FastTextArgs.SupervisedDefaults();
+            var args = new SupervisedArgs();
             args.PretrainedVectors = "cooking.unsup.300.vec";
 
             fastText.Invoking(x => x.Supervised("cooking.train.txt", outPath, args))
@@ -236,7 +235,7 @@ namespace UnitTests
             var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             
             string outPath = Path.Combine(_tempDir, "cooking");
-            var args = FastTextArgs.SupervisedDefaults();
+            var args = new SupervisedArgs();
             args.PretrainedVectors = "cooking.unsup.300.vec";
             args.dim = 300;
 

@@ -25,6 +25,21 @@ namespace FastText.NetWrapper
         OneVsAll
     };
 
+    public class SupervisedArgs : FastTextArgs
+    {
+        public unsafe SupervisedArgs() : base(false)
+        {
+            FastTextWrapper.FastTextArgsStruct* argsPtr;
+
+            GetDefaultSupervisedArgs(new IntPtr(&argsPtr));
+            
+            Mapper.Map(*argsPtr, this);
+            
+            DestroyArgs(new IntPtr(argsPtr));
+        }
+    }
+    
+
     /// <summary>
     /// This class contains all options that can be passed to fastText.
     /// Consult https://github.com/facebookresearch/fastText/blob/master/docs/options.md for their meaning.
@@ -34,23 +49,25 @@ namespace FastText.NetWrapper
         #region Args
 
         [DllImport(FastTextWrapper.FastTextDll)]
-        private static extern void GetDefaultArgs(IntPtr args);
+        protected static extern void GetDefaultArgs(IntPtr args);
         
         [DllImport(FastTextWrapper.FastTextDll)]
-        private static extern void GetDefaultSupervisedArgs(IntPtr args);
+        protected static extern void GetDefaultSupervisedArgs(IntPtr args);
         
         [DllImport(FastTextWrapper.FastTextDll)]
-        private static extern void DestroyArgs(IntPtr args);
+        protected static extern void DestroyArgs(IntPtr args);
 
         #endregion
 
-        private static readonly IMapper Mapper;
+        protected static readonly IMapper Mapper;
 
         static FastTextArgs()
         {
             Mapper = new MapperConfiguration(config =>
             {
+                config.ShouldMapProperty = prop => prop.GetMethod.IsPublic || prop.GetMethod.IsAssembly;
                 config.CreateMap<FastTextWrapper.FastTextArgsStruct, FastTextArgs>();
+                config.CreateMap<FastTextWrapper.FastTextArgsStruct, SupervisedArgs>();
             }).CreateMapper();
         }
         
@@ -58,7 +75,7 @@ namespace FastText.NetWrapper
         /// This constructor gets values from
         /// https://github.com/olegtarasov/fastText/blob/b0a32d744f4d16d8f9834649f6f178ff79b5a4ce/src/fasttext_api.cc#L12
         /// </summary>
-        public unsafe FastTextArgs() : this(false)
+        internal unsafe FastTextArgs() : this(false)
         {
             FastTextWrapper.FastTextArgsStruct* argsPtr;
 
@@ -69,31 +86,11 @@ namespace FastText.NetWrapper
             DestroyArgs(new IntPtr(argsPtr));
         }
 
-        private FastTextArgs(bool dummy)
+        protected FastTextArgs(bool dummy)
         {
             LabelPrefix = "__label__";
         }
-
-        /// <summary>
-        /// Returns the same supervised args defaults as in
-        /// https://github.com/olegtarasov/fastText/blob/b0a32d744f4d16d8f9834649f6f178ff79b5a4ce/src/fasttext_api.cc#L41
-        /// </summary>
-        /// <returns></returns>
-        public static unsafe FastTextArgs SupervisedDefaults()
-        {
-            var result = new FastTextArgs(false);
-            
-            FastTextWrapper.FastTextArgsStruct* argsPtr;
-
-            GetDefaultSupervisedArgs(new IntPtr(&argsPtr));
-
-            Mapper.Map(*argsPtr, result);
-            
-            DestroyArgs(new IntPtr(argsPtr));
-
-            return result;
-        }
-
+        
         /// <summary>
         /// learning rate [0.1]
         /// </summary>
@@ -147,7 +144,7 @@ namespace FastText.NetWrapper
         /// <summary>
         /// Model to use.
         /// </summary>
-        public ModelName model {get; set;}
+        internal ModelName model {get; set;}
         
         /// <summary>
         /// number of buckets [2000000]

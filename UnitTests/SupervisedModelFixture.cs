@@ -16,7 +16,7 @@ namespace UnitTests
             
             FastText = new FastTextWrapper();
             string outPath = Path.Combine(_tempDir, "cooking");
-            FastText.Supervised("cooking.train.txt",  outPath, FastTextArgs.SupervisedDefaults());
+            FastText.Supervised("cooking.train.txt",  outPath, new SupervisedArgs());
 
             FastText.IsModelReady().Should().BeTrue();
 

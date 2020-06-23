@@ -10,6 +10,28 @@ The wrapper comes with bundled precompiled native binaries for all three platfor
 Just add it to your project and start using it! No additional setup required. This library will unpack and call appropriate native 
 binary depending on target platform.
 
+## What's new
+
+### Version 1.2.0
+
+Version 1.2.0 introduces a few breaking changes to library API. If you are not ready to migrate, use v. `1.1.0`.
+
+* **❗️Breaking change ❗️** Removed both deprecated `Train()` methods.
+* **❗️Breaking change ❗️** Removed deprecated `SupervisedArgs` class.
+* **❗️Breaking change ❗️** Removed `FastTextArgs.SupervisedDefaults()` in favor of `SupervisedArgs` with default constructor.
+* **❗️Breaking change ❗️** `FastTextArgs` class can't be constructed directly, use new `SupervisedArgs` and `UnsupervisedArgs` classes.
+
+### Version 1.1.0
+
+* Added new `Supervised()` method as part of streamlining the API.
+* Added new `Test()` method for testing supervised model.
+* Deprecated both `Train()` methods. They will be removed in v. `1.2.0`.
+
+## Version `1.2.0` migration guide
+
+* Instead of old `Train()` methods use `Supervised()` and `Unsupervised()` methods.
+* Instead of `FastTextArgs.SupervisedDefaults()` use `SupervisedArgs` with default constructor.
+
 ## Usage
 
 Version `1.1` brings a redesigned API which closely follows fastText command-line interface. You can still use the old methods, 

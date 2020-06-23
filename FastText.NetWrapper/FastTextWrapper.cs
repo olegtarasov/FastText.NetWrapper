@@ -131,14 +131,12 @@ namespace FastText.NetWrapper
 
 		/// <summary>
 		/// Trains a new supervised model.
-		/// Use <see cref="FastTextArgs.SupervisedDefaults"/> to get reasonable default args for
-		/// supervised training.
 		/// </summary>
 		/// <param name="inputPath">Path to a training set.</param>
 		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
 		/// <param name="args">Low-level training arguments.</param>
 		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
-		public void Supervised(string inputPath, string outputPath, FastTextArgs args)
+		public void Supervised(string inputPath, string outputPath, SupervisedArgs args)
 		{
 			ValidatePaths(inputPath, outputPath, args.PretrainedVectors);
 
@@ -291,55 +289,7 @@ namespace FastText.NetWrapper
 		}
 
 		#endregion
-
-		#region Deprecated
-
-		/// <summary>
-		/// Trains a new supervised classification model.
-		/// </summary>
-		/// <param name="inputPath">Path to a training set.</param>
-		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
-		/// <param name="args">Training arguments.</param>
-		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
-		[Obsolete("This method is deprecated and will be removed in v. 1.1. Use the new `Supervised` method.")]
-		public void Train(string inputPath, string outputPath, SupervisedArgs args)
-		{
-			ValidatePaths(inputPath, outputPath, null);
-
-			var argsStruct = new SupervisedArgsStruct
-							{
-								Epochs = args.Epochs,
-								LearningRate = args.LearningRate,
-								MaxCharNGrams = args.MaxCharNGrams,
-								MinCharNGrams = args.MinCharNGrams,
-								Verbose = args.Verbose,
-								WordNGrams = args.WordNGrams,
-								Threads = args.Threads ?? 0
-							};
-
-			CheckForErrors(TrainSupervised(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix));
-			_maxLabelLen = GetMaxLabelLength(_fastText);
-		}
-
-		/// <summary>
-		/// Trains a new model using low-level FastText arguments.
-		/// </summary>
-		/// <param name="inputPath">Path to a training set.</param>
-		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
-		/// <param name="args">Low-level training arguments.</param>
-		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
-		[Obsolete("This method is obsolete. Use one of the new methods: Supervised")]
-		public void Train(string inputPath, string outputPath, FastTextArgs args)
-		{
-			ValidatePaths(inputPath, outputPath, args.PretrainedVectors);
-
-			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
-			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors));
-			_maxLabelLen = GetMaxLabelLength(_fastText);
-		}
-
-		#endregion
-
+		
 		/// <inheritdoc />
 		public void Dispose()
 		{
