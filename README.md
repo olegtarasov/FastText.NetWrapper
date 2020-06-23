@@ -31,7 +31,7 @@ Version 1.2.0 introduces a few breaking changes to library API. If you are not r
 ## Version `1.2.0` migration guide
 
 * Instead of old `Train()` methods use `Supervised()` and `Unsupervised()` methods.
-* Instead of `FastTextArgs.SupervisedDefaults()` use `SupervisedArgs` with default constructor or `Supervised()` overload with 2 arguments.
+* Instead of `FastTextArgs.SupervisedDefaults()` use `SupervisedArgs` or `Supervised()` overload with 2 arguments.
 
 ## Usage
 
@@ -150,7 +150,7 @@ Coming soon!
 
 ### Getting logs from the wrapper
 
-`FastTextWrapper` can produce a small amount of logs mostly conserning native library management. You can turn logging on by providing an
+`FastTextWrapper` can produce a small amount of logs mostly concerning native library management. You can turn logging on by providing an
 instance of `Microsoft.Extensions.Logging.ILoggerFactory`. In this example we use Serilog with console sink.
 
 You can also inject your standard `IloggerFactory` through .NET Core DI.
