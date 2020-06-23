@@ -16,10 +16,10 @@ binary depending on target platform.
 
 Version 1.2.0 introduces a few breaking changes to library API. If you are not ready to migrate, use v. `1.1.0`.
 
-* **❗️Breaking change ❗️** Removed both deprecated `Train()` methods.
-* **❗️Breaking change ❗️** Removed deprecated `SupervisedArgs` class.
-* **❗️Breaking change ❗️** Removed `FastTextArgs.SupervisedDefaults()` in favor of `SupervisedArgs` with default constructor.
-* **❗️Breaking change ❗️** `FastTextArgs` class can't be constructed directly, use new `SupervisedArgs` and `UnsupervisedArgs` classes.
+* **❗️Breaking change:️** Removed both deprecated `Train()` methods.
+* **❗️Breaking change:️** Removed deprecated `SupervisedArgs` class.
+* **❗️Breaking change:️** Removed `FastTextArgs.SupervisedDefaults()` in favor of `SupervisedArgs` with default constructor.
+* **❗️Breaking change:️** `FastTextArgs` class can't be constructed directly, use new `SupervisedArgs` and `UnsupervisedArgs` classes.
 
 ### Version 1.1.0
 
