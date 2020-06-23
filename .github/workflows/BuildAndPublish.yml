@@ -6,6 +6,7 @@ on:
       - '*'
     branches:
       - master
+      - v1.2
 
 jobs:
   test:
@@ -37,8 +38,8 @@ jobs:
         with:
           dotnet-version: 3.1.202
           
-      - name: Create the package
-        run: dotnet pack FastText.NetWrapper --configuration Release -p:PackageVersion=$GIT_TAG_NAME -o .
+      - name: Build
+        run: dotnet build FastText.NetWrapper --configuration Release -p:PackageVersion=$GIT_TAG_NAME -o .
 
       - name: Push the package
         env:
