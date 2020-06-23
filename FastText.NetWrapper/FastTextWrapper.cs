@@ -54,7 +54,11 @@ namespace FastText.NetWrapper
 				manager.LoadNativeLibrary();
 			}
 			
-			_mapper = new MapperConfiguration(config => config.CreateMap<FastTextArgs, FastTextArgsStruct>())
+			_mapper = new MapperConfiguration(config =>
+				{
+					config.ShouldMapProperty = prop => prop.GetMethod.IsPublic || prop.GetMethod.IsAssembly;
+					config.CreateMap<FastTextArgs, FastTextArgsStruct>();
+				})
 				.CreateMapper();
 
 			_fastText = CreateFastText();
@@ -134,6 +138,17 @@ namespace FastText.NetWrapper
 		/// </summary>
 		/// <param name="inputPath">Path to a training set.</param>
 		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
+		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+		public void Supervised(string inputPath, string outputPath)
+		{
+			Supervised(inputPath, outputPath, new SupervisedArgs());
+		}
+
+		/// <summary>
+		/// Trains a new supervised model.
+		/// </summary>
+		/// <param name="inputPath">Path to a training set.</param>
+		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
 		/// <param name="args">Low-level training arguments.</param>
 		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
 		public void Supervised(string inputPath, string outputPath, SupervisedArgs args)
@@ -147,7 +162,38 @@ namespace FastText.NetWrapper
 
 			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
 			argsStruct.model = model_name.sup;
-			CheckForErrors(Supervised(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors));
+			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors));
+			_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
+		}
+
+		/// <summary>
+		/// Trains a new unsupervised model.
+		/// </summary>
+		/// <param name="model">Type of unsupervised model: Skipgram or Cbow.</param>
+		/// <param name="inputPath">Path to a training set.</param>
+		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
+		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+		public void Unsupervised(UnsupervisedModel model, string inputPath, string outputPath)
+		{
+			Unsupervised(model, inputPath, outputPath, new UnsupervisedArgs());
+		}
+
+		/// <summary>
+		/// Trains a new unsupervised model.
+		/// </summary>
+		/// <param name="model">Type of unsupervised model: Skipgram or Cbow.</param>
+		/// <param name="inputPath">Path to a training set.</param>
+		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
+		/// <param name="args">Low-level training arguments.</param>
+		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+		public void Unsupervised(UnsupervisedModel model, string inputPath, string outputPath, UnsupervisedArgs args)
+		{
+			ValidatePaths(inputPath, outputPath, args.PretrainedVectors);
+
+			args.model = (ModelName)model;
+			
+			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
+			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors));
 			_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
 		}
 

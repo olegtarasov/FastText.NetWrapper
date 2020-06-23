@@ -130,7 +130,7 @@ namespace FastText.NetWrapper
         #region FastText commands
 
         [DllImport(FastTextDll)]
-        private static extern int Supervised(IntPtr hPtr, string input, string output, FastTextArgsStruct trainArgs, string labelPrefix, string pretrainedVectors);
+        private static extern int Train(IntPtr hPtr, string input, string output, FastTextArgsStruct trainArgs, string labelPrefix, string pretrainedVectors);
         
         [DllImport(FastTextDll)]
         private static extern int GetNN(IntPtr hPtr, byte[] input, IntPtr predictedLabels, float[] predictedProbabilities, int n);
@@ -158,16 +158,6 @@ namespace FastText.NetWrapper
         [DllImport(FastTextDll)]
         private static extern int DestroyMeter(IntPtr hPtr);
 
-        #endregion
-        
-        #region Deprecated
-        
-        [DllImport(FastTextDll)]
-        private static extern int TrainSupervised(IntPtr hPtr, string input, string output, SupervisedArgsStruct args, string labelPrefix);
-
-        [DllImport(FastTextDll)]
-        private static extern int Train(IntPtr hPtr, string input, string output, FastTextArgsStruct args, string labelPrefix, string pretrainedVectors);
-        
         #endregion
     }
 }

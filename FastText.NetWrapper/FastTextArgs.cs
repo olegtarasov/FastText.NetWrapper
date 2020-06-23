@@ -5,16 +5,6 @@ using AutoMapper;
 namespace FastText.NetWrapper
 {
     /// <summary>
-    /// FastText model.
-    /// </summary>
-    public enum ModelName : int
-    {
-        CBow = 1,
-        SkipGram,
-        Supervised
-    };
-
-    /// <summary>
     /// Training loss.
     /// </summary>
     public enum LossName : int
@@ -25,9 +15,59 @@ namespace FastText.NetWrapper
         OneVsAll
     };
 
+    /// <summary>
+    /// Unsupervised model.
+    /// </summary>
+    public enum UnsupervisedModel : int
+    {
+        CBow = 1,
+        SkipGram,
+    }
+
+    /// <summary>
+    /// FastText model.
+    /// </summary>
+    internal enum ModelName : int
+    {
+        CBow = 1,
+        SkipGram,
+        Supervised
+    };
+
+    public class QuantizeArgs : FastTextArgs
+    {
+        /// <summary>
+        /// quantizing the classifier [0]
+        /// </summary>
+        public bool qout {get; set;}
+        
+        /// <summary>
+        /// finetune embeddings if a cutoff is applied [0]
+        /// </summary>
+        public bool retrain {get; set;}
+        
+        /// <summary>
+        /// quantizing the norm separately [0]
+        /// </summary>
+        public bool qnorm {get; set;}
+        
+        /// <summary>
+        /// number of words and ngrams to retain [0]
+        /// </summary>
+        public ulong cutoff {get; set;}
+        
+        /// <summary>
+        /// size of each sub-vector [2]
+        /// </summary>
+        public ulong dsub {get; set;}
+    }
+
+    /// <summary>
+    /// Arguments for supervised model training.
+    /// </summary>
     public class SupervisedArgs : FastTextArgs
     {
-        public unsafe SupervisedArgs() : base(false)
+        public unsafe SupervisedArgs()
         {
             FastTextWrapper.FastTextArgsStruct* argsPtr;
 
@@ -37,6 +77,13 @@ namespace FastText.NetWrapper
             
             DestroyArgs(new IntPtr(argsPtr));
         }
+    }
+
+    /// <summary>
+    /// Arguments for unsupervised learning.
+    /// </summary>
+    public class UnsupervisedArgs : FastTextArgs
+    {
     }
     
 
@@ -68,6 +115,8 @@ namespace FastText.NetWrapper
                 config.ShouldMapProperty = prop => prop.GetMethod.IsPublic || prop.GetMethod.IsAssembly;
                 config.CreateMap<FastTextWrapper.FastTextArgsStruct, FastTextArgs>();
                 config.CreateMap<FastTextWrapper.FastTextArgsStruct, SupervisedArgs>();
+                config.CreateMap<FastTextWrapper.FastTextArgsStruct, UnsupervisedArgs>();
+                config.CreateMap<FastTextWrapper.FastTextArgsStruct, QuantizeArgs>();
             }).CreateMapper();
         }
         
@@ -75,8 +124,10 @@ namespace FastText.NetWrapper
         /// This constructor gets values from
         /// https://github.com/olegtarasov/fastText/blob/b0a32d744f4d16d8f9834649f6f178ff79b5a4ce/src/fasttext_api.cc#L12
         /// </summary>
-        internal unsafe FastTextArgs() : this(false)
+        protected unsafe FastTextArgs()
         {
+            LabelPrefix = "__label__";
+            
             FastTextWrapper.FastTextArgsStruct* argsPtr;
 
             GetDefaultArgs(new IntPtr(&argsPtr));
@@ -84,11 +135,6 @@ namespace FastText.NetWrapper
             Mapper.Map(*argsPtr, this);
             
             DestroyArgs(new IntPtr(argsPtr));
-        }
-
-        protected FastTextArgs(bool dummy)
-        {
-            LabelPrefix = "__label__";
         }
         
         /// <summary>
@@ -181,31 +227,6 @@ namespace FastText.NetWrapper
         /// Fixed random seed.
         /// </summary>
         public int seed { get; set; }
-        
-        /// <summary>
-        /// quantizing the classifier [0]
-        /// </summary>
-        public bool qout {get; set;}
-        
-        /// <summary>
-        /// finetune embeddings if a cutoff is applied [0]
-        /// </summary>
-        public bool retrain {get; set;}
-        
-        /// <summary>
-        /// quantizing the norm separately [0]
-        /// </summary>
-        public bool qnorm {get; set;}
-        
-        /// <summary>
-        /// number of words and ngrams to retain [0]
-        /// </summary>
-        public ulong cutoff {get; set;}
-        
-        /// <summary>
-        /// size of each sub-vector [2]
-        /// </summary>
-        public ulong dsub {get; set;}
 
         /// <summary>
         /// labels prefix [__label__]

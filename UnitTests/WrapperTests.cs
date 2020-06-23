@@ -32,21 +32,6 @@ namespace UnitTests
         }
 
         [Fact]
-        public void CanGetDefaultArgs()
-        {
-            var args = new FastTextArgs();
-
-            args.lr.Should().BeApproximately(0.05d, 10e-5);
-            args.bucket.Should().Be(2000000);
-            args.dim.Should().Be(100);
-            args.loss.Should().Be(LossName.NegativeSampling);
-            args.model.Should().Be(ModelName.SkipGram);
-            args.LabelPrefix.Should().Be("__label__");
-
-            // No need to check all of them
-        }
-
-        [Fact]
         public void CanGetDefaultSupervisedArgs()
         {
             var args = new SupervisedArgs();
@@ -61,6 +46,29 @@ namespace UnitTests
             args.lr.Should().BeApproximately(0.1d, 10e-5);
         }
 
+        [Fact]
+        public void CanGetDefaultQuantizeArgs()
+        {
+            var args = new QuantizeArgs();
+
+            args.dsub.Should().Be(2);
+        }
+        
+        [Fact]
+        public void CanGetDefaultSkipgramArgs()
+        {
+            var args = new UnsupervisedArgs();
+
+            args.lr.Should().BeApproximately(0.05d, 10e-5);
+            args.bucket.Should().Be(2000000);
+            args.dim.Should().Be(100);
+            args.loss.Should().Be(LossName.NegativeSampling);
+            args.model.Should().Be(ModelName.SkipGram);
+            args.LabelPrefix.Should().Be("__label__");
+
+            // No need to check all of them
+        }
+        
         // Deprecated methods removed.
         // [Fact]
         // public void CanTrainModelWithSuperOldApi()
@@ -105,11 +113,11 @@ namespace UnitTests
         }
         
         [Fact]
-        public void CanTrainSupervisedWithNoLogging()
+        public void CanTrainSupervisedWithNoLoggingAndNoArgs()
         {
             var fastText = new FastTextWrapper();
             string outPath = Path.Combine(_tempDir, "cooking");
-            fastText.Supervised("cooking.train.txt",  outPath, new SupervisedArgs());
+            fastText.Supervised("cooking.train.txt",  outPath);
 
             fastText.IsModelReady().Should().BeTrue();
             fastText.GetModelDimension().Should().Be(100);
@@ -271,6 +279,34 @@ namespace UnitTests
                 curve[i].precision.Should().BeApproximately(debugCurve[i].precision, 10e-5);
                 curve[i].recall.Should().BeApproximately(debugCurve[i].recall, 10e-5);
             }
+        }
+
+        [Fact]
+        public void CanTrainSkipgramModel()
+        {
+            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            string outPath = Path.Combine(_tempDir, "cooking");
+            fastText.Unsupervised(UnsupervisedModel.SkipGram, "cooking.train.nolabels.txt",  outPath);
+
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+
+            File.Exists(outPath + ".bin").Should().BeTrue();
+            File.Exists(outPath + ".vec").Should().BeTrue();
+        }
+        
+        [Fact]
+        public void CanTrainCbowModel()
+        {
+            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            string outPath = Path.Combine(_tempDir, "cooking");
+            fastText.Unsupervised(UnsupervisedModel.CBow, "cooking.train.nolabels.txt",  outPath);
+
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+
+            File.Exists(outPath + ".bin").Should().BeTrue();
+            File.Exists(outPath + ".vec").Should().BeTrue();
         }
 
         private void AssertMetrics(Metrics actual, Metrics expected)
