@@ -18,7 +18,7 @@ Version 1.2.0 introduces a few breaking changes to library API. If you are not r
 
 * **❗️Breaking change:️** Removed both deprecated `Train()` methods.
 * **❗️Breaking change:️** Removed deprecated `SupervisedArgs` class.
-* **❗️Breaking change:️** Removed `FastTextArgs.SupervisedDefaults()` in favor of `SupervisedArgs` with default constructor.
+* **❗️Breaking change:️** Removed `FastTextArgs.SupervisedDefaults()` in favor of new `SupervisedArgs` with default constructor.
 * **❗️Breaking change:️** `FastTextArgs` class can't be constructed directly, use new `SupervisedArgs` and `UnsupervisedArgs` classes.
 
 ### Version 1.1.0
