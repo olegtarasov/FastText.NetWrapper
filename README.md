@@ -156,6 +156,10 @@ instance of `Microsoft.Extensions.Logging.ILoggerFactory`. In this example we us
 You can also inject your standard `IloggerFactory` through .NET Core DI.
 
 ```c#
+// Add the following Nuget packages to your project:
+// * Serilog.Sinks.Console
+// * Serilog.Extensions.Logging 
+
 Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console(theme: ConsoleTheme.None)

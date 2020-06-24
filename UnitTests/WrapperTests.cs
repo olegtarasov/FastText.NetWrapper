@@ -6,8 +6,10 @@ using FastText.NetWrapper;
 using FluentAssertions;
 using MartinCostello.Logging.XUnit;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Xunit;
 using Xunit.Abstractions;
+using TestResult = FastText.NetWrapper.TestResult;
 
 namespace UnitTests
 {
@@ -143,7 +145,7 @@ namespace UnitTests
         [Fact]
         public void CanGetNearestNeighbours()
         {
-            var nn = _fixture.FastText.GetNN("train", 5);
+            var nn = _fixture.FastText.GetNearestNeighbours("train", 5);
             
             nn.Length.Should().Be(5);
 
@@ -307,6 +309,40 @@ namespace UnitTests
 
             File.Exists(outPath + ".bin").Should().BeTrue();
             File.Exists(outPath + ".vec").Should().BeTrue();
+        }
+
+        [Fact]
+        public void SkipgramAndCBowLearnDifferentRepresentations()
+        {
+            var sg = new FastTextWrapper(loggerFactory: _loggerFactory);
+            string outSG = Path.Combine(_tempDir, "cooking");
+            sg.Unsupervised(UnsupervisedModel.SkipGram, "cooking.train.nolabels.txt",  outSG);
+            
+            var cbow = new FastTextWrapper(loggerFactory: _loggerFactory);
+            string outCbow = Path.Combine(_tempDir, "cooking");
+            cbow.Unsupervised(UnsupervisedModel.CBow, "cooking.train.nolabels.txt",  outCbow);
+
+            var nnSg = sg.GetNearestNeighbours("pot", 10);
+            var nnCbow = cbow.GetNearestNeighbours("pot", 10);
+            var nnSup = _fixture.FastText.GetNearestNeighbours("pot", 10);
+
+            void CheckPair(Prediction[] first, Prediction[] second)
+            {
+                int samePredictions = 0;
+
+                foreach (var prediction in first)
+                {
+                    if (second.Any(x => x.Label == prediction.Label))
+                        samePredictions++;
+                }
+
+                // We want less than a half of same predictions.
+                samePredictions.Should().BeLessThan(first.Length / 2);
+            }
+            
+            CheckPair(nnSg, nnCbow);
+            CheckPair(nnSg, nnSup);
+            CheckPair(nnCbow, nnSup);
         }
 
         private void AssertMetrics(Metrics actual, Metrics expected)

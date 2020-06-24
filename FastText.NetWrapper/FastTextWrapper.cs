@@ -203,7 +203,17 @@ namespace FastText.NetWrapper
 		/// <param name="text">Text to calculate nearest neighbors from.</param>
 		/// <param name="number">Number of neighbors.</param>
 		/// <returns>Nearest neighbor predictions.</returns>
-		public unsafe Prediction[] GetNN(string text, int number)
+		[Obsolete("Please use GetNearestNeighbours method")]
+		public Prediction[] GetNN(string text, int number) => GetNearestNeighbours(text, number);
+		
+		
+		/// <summary>
+		/// Calculate nearest neighbors from input text.
+		/// </summary>
+		/// <param name="text">Text to calculate nearest neighbors from.</param>
+		/// <param name="number">Number of neighbors.</param>
+		/// <returns>Nearest neighbor predictions.</returns>
+		public unsafe Prediction[] GetNearestNeighbours(string text, int number)
 		{
 			CheckModelLoaded();
 
