@@ -137,6 +137,9 @@ namespace FastText.NetWrapper
 
         [DllImport(FastTextDll)]
         private static extern int GetSentenceVector(IntPtr hPtr, byte[] input, IntPtr vector);
+
+        [DllImport(FastTextDll)]
+        private static extern int GetWordVector(IntPtr hPtr, byte[] word, IntPtr vector);
         
         #endregion
 
