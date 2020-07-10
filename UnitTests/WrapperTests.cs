@@ -143,7 +143,7 @@ namespace UnitTests
             
             var autotuneArgs = new AutotuneArgs
             {
-                Duration = 15,
+                Duration = 30,
                 Metric = "precisionAtRecall:30",
                 Predictions = 2,
                 ValidationFile = "cooking.valid.txt"
@@ -198,7 +198,7 @@ namespace UnitTests
             
             var autotuneArgs = new AutotuneArgs
             {
-                Duration = 15,
+                Duration = 60,
                 Metric = "precisionAtRecall:30",
                 Predictions = 2,
                 ModelSize = "10M",
