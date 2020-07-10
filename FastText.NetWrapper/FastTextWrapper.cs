@@ -57,7 +57,10 @@ namespace FastText.NetWrapper
 			_mapper = new MapperConfiguration(config =>
 				{
 					config.ShouldMapProperty = prop => prop.GetMethod.IsPublic || prop.GetMethod.IsAssembly;
-					config.CreateMap<FastTextArgs, FastTextArgsStruct>();
+					config.CreateMap<SupervisedArgs, FastTextArgsStruct>();
+					config.CreateMap<QuantizedSupervisedArgs, FastTextArgsStruct>();
+					config.CreateMap<UnsupervisedArgs, FastTextArgsStruct>();
+					config.CreateMap<AutotuneArgs, AutotuneArgsStruct>();
 				})
 				.CreateMapper();
 
@@ -141,7 +144,7 @@ namespace FastText.NetWrapper
 		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
 		public void Supervised(string inputPath, string outputPath)
 		{
-			Supervised(inputPath, outputPath, new SupervisedArgs());
+			Supervised(inputPath, outputPath, new SupervisedArgs(), new AutotuneArgs());
 		}
 
 		/// <summary>
@@ -153,6 +156,33 @@ namespace FastText.NetWrapper
 		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
 		public void Supervised(string inputPath, string outputPath, SupervisedArgs args)
 		{
+			Supervised(inputPath, outputPath, args, new AutotuneArgs());
+		}
+
+		/// <summary>
+		/// Trains a new supervised model.
+		/// </summary>
+		/// <param name="inputPath">Path to a training set.</param>
+		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
+		/// <param name="args">Low-level training arguments.</param>
+		/// <param name="autotuneArgs">Autotune arguments.</param>
+		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+		public void Supervised(string inputPath, string outputPath, SupervisedArgs args, AutotuneArgs autotuneArgs)
+		{
+			Supervised(inputPath, outputPath, args, autotuneArgs, false);
+		}
+
+		/// <summary>
+		/// Trains a new supervised model.
+		/// </summary>
+		/// <param name="inputPath">Path to a training set.</param>
+		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
+		/// <param name="args">Low-level training arguments.</param>
+		/// <param name="autotuneArgs">Autotune arguments.</param>
+		/// <param name="debug">Whether to write debug info.</param>
+		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+		internal void Supervised(string inputPath, string outputPath, SupervisedArgs args, AutotuneArgs autotuneArgs, bool debug)
+		{
 			ValidatePaths(inputPath, outputPath, args.PretrainedVectors);
 
 			if (args.model != ModelName.Supervised)
@@ -160,9 +190,17 @@ namespace FastText.NetWrapper
 				_logger?.LogWarning($"{args.model} model type specified in a Supervised() call. Model type will be changed to Supervised.");
 			}
 
+			var quantizedArgs = args as QuantizedSupervisedArgs;
+			if (!string.IsNullOrEmpty(autotuneArgs.ModelSize) && quantizedArgs == null)
+			{
+				throw new InvalidOperationException("You specified model size in autotuneArgs, but passed SupervisedArgs instance. Pass QuantizedSupervisedArgs instead.");
+			}
+
 			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
 			argsStruct.model = model_name.sup;
-			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors));
+
+			var autotuneStruct = _mapper.Map<AutotuneArgsStruct>(autotuneArgs ?? new AutotuneArgs());
+			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, autotuneStruct, args.LabelPrefix, args.PretrainedVectors, debug));
 			_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
 		}
 
@@ -193,7 +231,7 @@ namespace FastText.NetWrapper
 			args.model = (ModelName)model;
 			
 			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
-			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors));
+			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, new AutotuneArgsStruct(), args.LabelPrefix, args.PretrainedVectors, false));
 			_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
 		}
 

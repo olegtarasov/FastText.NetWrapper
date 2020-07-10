@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using AutoMapper;
 
@@ -34,8 +35,23 @@ namespace FastText.NetWrapper
         Supervised
     };
 
-    public class QuantizeArgs : FastTextArgs
+    public class QuantizedSupervisedArgs : SupervisedArgs
     {
+        public unsafe QuantizedSupervisedArgs()
+        {
+            FastTextWrapper.FastTextArgsStruct* argsPtr;
+
+            GetDefaultSupervisedArgs(new IntPtr(&argsPtr));
+            
+            Mapper.Map(*argsPtr, this);
+            
+            DestroyArgs(new IntPtr(argsPtr));
+        }
+
+        internal QuantizedSupervisedArgs(bool dummy)
+        {
+        }
+
         /// <summary>
         /// quantizing the classifier [0]
         /// </summary>
@@ -76,7 +92,7 @@ namespace FastText.NetWrapper
             Mapper.Map(*argsPtr, this);
             
             DestroyArgs(new IntPtr(argsPtr));
-        }
+        } 
     }
 
     /// <summary>
@@ -91,7 +107,7 @@ namespace FastText.NetWrapper
     /// This class contains all options that can be passed to fastText.
     /// Consult https://github.com/facebookresearch/fastText/blob/master/docs/options.md for their meaning.
     /// </summary>
-    public class FastTextArgs
+    public abstract class FastTextArgs
     {
         #region Args
 
@@ -116,7 +132,7 @@ namespace FastText.NetWrapper
                 config.CreateMap<FastTextWrapper.FastTextArgsStruct, FastTextArgs>();
                 config.CreateMap<FastTextWrapper.FastTextArgsStruct, SupervisedArgs>();
                 config.CreateMap<FastTextWrapper.FastTextArgsStruct, UnsupervisedArgs>();
-                config.CreateMap<FastTextWrapper.FastTextArgsStruct, QuantizeArgs>();
+                config.CreateMap<FastTextWrapper.FastTextArgsStruct, QuantizedSupervisedArgs>();
             }).CreateMapper();
         }
         
@@ -136,7 +152,7 @@ namespace FastText.NetWrapper
             
             DestroyArgs(new IntPtr(argsPtr));
         }
-        
+
         /// <summary>
         /// learning rate [0.1]
         /// </summary>
@@ -237,5 +253,156 @@ namespace FastText.NetWrapper
         /// pretrained word vectors for supervised learning []
         /// </summary>
         public string PretrainedVectors { get; set; }
+    }
+
+    /// <summary>
+    /// Autotune arguments.
+    /// </summary>
+    public class AutotuneArgs
+    {
+        /// <summary>
+        /// Default ctor.
+        /// </summary>
+        public AutotuneArgs()
+        {
+        }
+
+        /// <summary>
+        /// Ctor specifying a validation file.
+        /// </summary>
+        /// <param name="validationFile">Validation file to tune on.</param>
+        public AutotuneArgs(string validationFile)
+        {
+            ValidationFile = validationFile;
+        }
+
+        /// <summary>
+        /// Path to a labeled validation file for autotuning. 
+        /// </summary>
+        public string ValidationFile { get; set; } = "";
+
+        /// <summary>
+        /// Metric to autotune with. Default is "f1".
+        /// See https://github.com/olegtarasov/fastText/blob/c_api/docs/autotune.md#how-to-set-the-optimization-metric
+        /// for possible options.
+        /// </summary>
+        public string Metric { get; set; } = "f1";
+
+        /// <summary>
+        /// Number of predictions to make during autotune. Default is 1.
+        /// </summary>
+        public int Predictions { get; set; } = 1;
+
+        /// <summary>
+        /// Time in seconds to spend on tuning. Default is 60 * 5 = 5 minutes.
+        /// </summary>
+        public int Duration { get; set; } = 60 * 5;
+
+        /// <summary>
+        /// If set, creates a quantized model, also optimizing quantization parameters.
+        /// See https://github.com/olegtarasov/fastText/blob/c_api/docs/autotune.md#constrain-model-size
+        /// for details.
+        /// </summary>
+        public string ModelSize { get; set; } = "";
+    }
+
+    internal class DebugArgs
+    {
+        public QuantizedSupervisedArgs ExternalArgs { get; set; } = new QuantizedSupervisedArgs(false);
+        public AutotuneArgs ExternalTune { get; set; } = new AutotuneArgs();
+        public QuantizedSupervisedArgs ConvertedArgs { get; set; } = new QuantizedSupervisedArgs(false);
+        public AutotuneArgs ConvertedTune { get; set; } = new AutotuneArgs();
+
+        public string ExternalInput { get; set; }
+        public string ExternalOutput { get; set; }
+        public string ConvertedInput { get; set; }
+        public string ConvertedOutput { get; set; }
+        
+        internal static DebugArgs Load(string path)
+        {
+            var result = new DebugArgs();
+            var lines = File.ReadAllLines(path);
+            int idx = -1;
+            
+            if (lines[++idx] != "= eargs")
+                throw new InvalidOperationException();
+
+            result.ExternalInput = lines[++idx];
+            result.ExternalOutput = lines[++idx];
+            
+            result.ExternalArgs.lr = double.Parse(lines[++idx]);
+            result.ExternalArgs.lrUpdateRate = int.Parse(lines[++idx]);
+            result.ExternalArgs.dim = int.Parse(lines[++idx]);
+            result.ExternalArgs.ws = int.Parse(lines[++idx]);
+            result.ExternalArgs.epoch = int.Parse(lines[++idx]);
+            result.ExternalArgs.minCount = int.Parse(lines[++idx]);
+            result.ExternalArgs.minCountLabel = int.Parse(lines[++idx]);
+            result.ExternalArgs.neg = int.Parse(lines[++idx]);
+            result.ExternalArgs.wordNgrams = int.Parse(lines[++idx]);
+            result.ExternalArgs.loss = (LossName)int.Parse(lines[++idx]);
+            result.ExternalArgs.model = (ModelName)int.Parse(lines[++idx]);
+            result.ExternalArgs.bucket = int.Parse(lines[++idx]);
+            result.ExternalArgs.minn = int.Parse(lines[++idx]);
+            result.ExternalArgs.maxn = int.Parse(lines[++idx]);
+            result.ExternalArgs.thread = int.Parse(lines[++idx]);
+            result.ExternalArgs.t = double.Parse(lines[++idx]);
+            result.ExternalArgs.LabelPrefix = lines[++idx];
+            result.ExternalArgs.verbose = int.Parse(lines[++idx]);
+            result.ExternalArgs.PretrainedVectors = lines[++idx];
+            result.ExternalArgs.saveOutput = int.Parse(lines[++idx]) == 1;
+            result.ExternalArgs.seed = int.Parse(lines[++idx]);
+            result.ExternalArgs.qout = int.Parse(lines[++idx]) == 1;
+            result.ExternalArgs.retrain = int.Parse(lines[++idx]) == 1;
+            result.ExternalArgs.qnorm = int.Parse(lines[++idx]) == 1;
+            result.ExternalArgs.cutoff = ulong.Parse(lines[++idx]);
+            result.ExternalArgs.dsub = ulong.Parse(lines[++idx]);
+
+            result.ExternalTune.ValidationFile = lines[++idx];
+            result.ExternalTune.Metric = lines[++idx];
+            result.ExternalTune.Predictions = int.Parse(lines[++idx]);
+            result.ExternalTune.Duration = int.Parse(lines[++idx]);
+            result.ExternalTune.ModelSize = lines[++idx];
+            
+            if (lines[++idx] != "= args")
+                throw new InvalidOperationException();
+
+            result.ConvertedInput = lines[++idx];
+            result.ConvertedOutput = lines[++idx];
+
+            result.ConvertedArgs.lr = double.Parse(lines[++idx]);
+            result.ConvertedArgs.lrUpdateRate = int.Parse(lines[++idx]);
+            result.ConvertedArgs.dim = int.Parse(lines[++idx]);
+            result.ConvertedArgs.ws = int.Parse(lines[++idx]);
+            result.ConvertedArgs.epoch = int.Parse(lines[++idx]);
+            result.ConvertedArgs.minCount = int.Parse(lines[++idx]);
+            result.ConvertedArgs.minCountLabel = int.Parse(lines[++idx]);
+            result.ConvertedArgs.neg = int.Parse(lines[++idx]);
+            result.ConvertedArgs.wordNgrams = int.Parse(lines[++idx]);
+            result.ConvertedArgs.loss = (LossName)int.Parse(lines[++idx]);
+            result.ConvertedArgs.model = (ModelName)int.Parse(lines[++idx]);
+            result.ConvertedArgs.bucket = int.Parse(lines[++idx]);
+            result.ConvertedArgs.minn = int.Parse(lines[++idx]);
+            result.ConvertedArgs.maxn = int.Parse(lines[++idx]);
+            result.ConvertedArgs.thread = int.Parse(lines[++idx]);
+            result.ConvertedArgs.t = double.Parse(lines[++idx]);
+            result.ConvertedArgs.LabelPrefix = lines[++idx];
+            result.ConvertedArgs.verbose = int.Parse(lines[++idx]);
+            result.ConvertedArgs.PretrainedVectors = lines[++idx];
+            result.ConvertedArgs.saveOutput = int.Parse(lines[++idx]) == 1;
+            result.ConvertedArgs.seed = int.Parse(lines[++idx]);
+            result.ConvertedArgs.qout = int.Parse(lines[++idx]) == 1;
+            result.ConvertedArgs.retrain = int.Parse(lines[++idx]) == 1;
+            result.ConvertedArgs.qnorm = int.Parse(lines[++idx]) == 1;
+            result.ConvertedArgs.cutoff = ulong.Parse(lines[++idx]);
+            result.ConvertedArgs.dsub = ulong.Parse(lines[++idx]);
+
+            result.ConvertedTune.ValidationFile = lines[++idx];
+            result.ConvertedTune.Metric = lines[++idx];
+            result.ConvertedTune.Predictions = int.Parse(lines[++idx]);
+            result.ConvertedTune.Duration = int.Parse(lines[++idx]);
+            result.ConvertedTune.ModelSize = lines[++idx];
+
+            return result;
+        }
     }
 }

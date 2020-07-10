@@ -8,24 +8,22 @@ namespace FastText.NetWrapper
     {
         internal const string FastTextDll = "fasttext";
 
-        internal enum model_name : int { cbow = 1, sg, sup };
+        public enum model_name : int { cbow = 1, sg, sup };
 
-        internal enum loss_name : int { hs = 1, ns, softmax, ova };
+        public enum loss_name : int { hs = 1, ns, softmax, ova };
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        private struct SupervisedArgsStruct
+        public struct AutotuneArgsStruct
         {
-            public int Epochs;
-            public double LearningRate;
-            public int WordNGrams;
-            public int MinCharNGrams;
-            public int MaxCharNGrams;
-            public int Verbose;
-            public int Threads;
+            public string ValidationFile;
+            public string Metric;
+            public int Predictions;
+            public int Duration;
+            public string ModelSize;
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        internal struct FastTextArgsStruct
+        public struct FastTextArgsStruct
         {
             public double lr;
             public int lrUpdateRate;
@@ -44,11 +42,21 @@ namespace FastText.NetWrapper
             public int thread;
             public double t;
             public int verbose;
+            
+            [MarshalAs(UnmanagedType.I1)]
             public bool saveOutput;
+            
             public int seed;
+            
+            [MarshalAs(UnmanagedType.I1)]
             public bool qout;
+            
+            [MarshalAs(UnmanagedType.I1)]
             public bool retrain;
+            
+            [MarshalAs(UnmanagedType.I1)]
             public bool qnorm;
+            
             public ulong cutoff;
             public ulong dsub;
         }
@@ -130,7 +138,7 @@ namespace FastText.NetWrapper
         #region FastText commands
 
         [DllImport(FastTextDll)]
-        private static extern int Train(IntPtr hPtr, string input, string output, FastTextArgsStruct trainArgs, string labelPrefix, string pretrainedVectors);
+        private static extern int Train(IntPtr hPtr, string input, string output, FastTextArgsStruct trainArgs, AutotuneArgsStruct tuneArgs, string labelPrefix, string pretrainedVectors, [MarshalAs(UnmanagedType.I1)] bool debug);
         
         [DllImport(FastTextDll)]
         private static extern int GetNN(IntPtr hPtr, byte[] input, IntPtr predictedLabels, float[] predictedProbabilities, int n);
@@ -153,7 +161,7 @@ namespace FastText.NetWrapper
         #region Testing
         
         [DllImport(FastTextDll)]
-        private static extern int Test(IntPtr hPtr, string input, int k, float threshold, IntPtr meterPtr, bool debug);
+        private static extern int Test(IntPtr hPtr, string input, int k, float threshold, IntPtr meterPtr, [MarshalAs(UnmanagedType.I1)] bool debug);
         
         [DllImport(FastTextDll)]
         private static extern int DestroyMeter(IntPtr hPtr);

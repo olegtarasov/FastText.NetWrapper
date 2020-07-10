@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using FastText.NetWrapper;
 using FluentAssertions;
 using MartinCostello.Logging.XUnit;
@@ -34,6 +35,15 @@ namespace UnitTests
         }
 
         [Fact]
+        public void StructureSizesAreCorrect()
+        {
+            Marshal.SizeOf<FastTextWrapper.FastTextArgsStruct>().Should().Be(100);
+            Marshal.SizeOf<FastTextWrapper.AutotuneArgsStruct>().Should().Be(32);
+            Marshal.SizeOf<FastTextWrapper.TestMetrics>().Should().Be(48);
+            Marshal.SizeOf<FastTextWrapper.TestMeter>().Should().Be(40);
+        }
+
+        [Fact]
         public void CanGetDefaultSupervisedArgs()
         {
             var args = new SupervisedArgs();
@@ -51,7 +61,7 @@ namespace UnitTests
         [Fact]
         public void CanGetDefaultQuantizeArgs()
         {
-            var args = new QuantizeArgs();
+            var args = new QuantizedSupervisedArgs();
 
             args.dsub.Should().Be(2);
         }
@@ -68,50 +78,146 @@ namespace UnitTests
             args.model.Should().Be(ModelName.SkipGram);
             args.LabelPrefix.Should().Be("__label__");
 
-            // No need to check all of them
+            // No need to check all of them here.
         }
         
-        // Deprecated methods removed.
-        // [Fact]
-        // public void CanTrainModelWithSuperOldApi()
-        // {
-        //     var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
-        //     string outPath = Path.Combine(_tempDir, "cooking");
-        //     fastText.Train("cooking.train.txt",  outPath, new SupervisedArgs());
-        //
-        //     CheckLabels(fastText.GetLabels());
-        //
-        //     File.Exists(outPath + ".bin").Should().BeTrue();
-        //     File.Exists(outPath + ".vec").Should().BeTrue();
-        // }
-
-        // [Fact]
-        // public void CanTrainModelWithOldApi()
-        // {
-        //     var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
-        //     string outPath = Path.Combine(_tempDir, "cooking");
-        //     fastText.Train("cooking.train.txt", outPath, new SupervisedArgs());
-        //
-        //     CheckLabels(fastText.GetLabels());
-        //
-        //     File.Exists(outPath + ".bin").Should().BeTrue();
-        //     File.Exists(outPath + ".vec").Should().BeTrue();
-        // }
 
         [Fact]
         public void CanTrainSupervised()
         {
             var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             string outPath = Path.Combine(_tempDir, "cooking");
-            fastText.Supervised("cooking.train.txt",  outPath, new SupervisedArgs());
+            
+            var args = new SupervisedArgs();
+            var tuneArgs = new AutotuneArgs();
+            
+            fastText.Supervised("cooking.train.txt",  outPath, args, tuneArgs, true);
 
             fastText.IsModelReady().Should().BeTrue();
             fastText.GetModelDimension().Should().Be(100);
 
-            CheckLabels(fastText.GetLabels());
+            AssertLabels(fastText.GetLabels());
 
             File.Exists(outPath + ".bin").Should().BeTrue();
             File.Exists(outPath + ".vec").Should().BeTrue();
+
+            var debugArgs = DebugArgs.Load("_train.txt");
+            AssertSupervisedArgs(args, debugArgs.ExternalArgs);
+            AssertSupervisedArgs(args, debugArgs.ConvertedArgs);
+            AssertAutotuneArgs(tuneArgs, debugArgs.ExternalTune);
+            AssertAutotuneArgs(tuneArgs, debugArgs.ConvertedTune);
+
+            debugArgs.ExternalInput.Should().Be("cooking.train.txt");
+            debugArgs.ConvertedInput.Should().Be("cooking.train.txt");
+            debugArgs.ExternalOutput.Should().Be(outPath);
+            debugArgs.ConvertedOutput.Should().Be(outPath);
+        }
+        
+        [Fact]
+        public void CanAutotuneSupervisedModel()
+        {
+            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            string outPath = Path.Combine(_tempDir, "cooking");
+
+            var args = new SupervisedArgs
+            {
+                bucket = 2100000,
+                dim = 250,
+                epoch = 10,
+                loss = LossName.HierarchicalSoftmax,
+                lr = 0.5,
+                maxn = 5,
+                minn = 2,
+                neg = 6,
+                seed = 42,
+                t = 0.0002,
+                thread = 10,
+                verbose = 1,
+                ws = 6,
+                minCount = 2,
+                saveOutput = true,
+                wordNgrams = 2,
+                lrUpdateRate = 110,
+                minCountLabel = 1
+            };
+            
+            var autotuneArgs = new AutotuneArgs
+            {
+                Duration = 15,
+                Metric = "precisionAtRecall:30",
+                Predictions = 2,
+                ValidationFile = "cooking.valid.txt"
+            };
+            
+            fastText.Supervised("cooking.train.txt",  outPath, args, autotuneArgs, true);
+
+            var debugArgs = DebugArgs.Load("_train.txt");
+            
+            AssertSupervisedArgs(args, debugArgs.ExternalArgs);
+            AssertSupervisedArgs(args, debugArgs.ConvertedArgs);
+            AssertAutotuneArgs(autotuneArgs, debugArgs.ExternalTune);
+            AssertAutotuneArgs(autotuneArgs, debugArgs.ConvertedTune);
+
+            debugArgs.ExternalInput.Should().Be("cooking.train.txt");
+            debugArgs.ConvertedInput.Should().Be("cooking.train.txt");
+            debugArgs.ExternalOutput.Should().Be(outPath);
+            debugArgs.ConvertedOutput.Should().Be(outPath);
+        }
+
+        [Fact]
+        public void CanAutotuneQuantizedSupervisedModel()
+        {
+            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            string outPath = Path.Combine(_tempDir, "cooking");
+
+            var args = new QuantizedSupervisedArgs
+            {
+                bucket = 2100000,
+                dim = 250,
+                epoch = 10,
+                loss = LossName.HierarchicalSoftmax,
+                lr = 0.5,
+                maxn = 5,
+                minn = 2,
+                neg = 6,
+                seed = 42,
+                t = 0.0002,
+                thread = 10,
+                verbose = 1,
+                ws = 6,
+                minCount = 2,
+                saveOutput = true,
+                wordNgrams = 2,
+                lrUpdateRate = 110,
+                minCountLabel = 1,
+                
+                cutoff = 10000,
+                dsub = 3,
+                retrain = true
+            };
+            
+            var autotuneArgs = new AutotuneArgs
+            {
+                Duration = 15,
+                Metric = "precisionAtRecall:30",
+                Predictions = 2,
+                ModelSize = "10M",
+                ValidationFile = "cooking.valid.txt"
+            };
+            
+            fastText.Supervised("cooking.train.txt",  outPath, args, autotuneArgs, true);
+
+            var debugArgs = DebugArgs.Load("_train.txt");
+            
+            AssertQuantizedArgs(args, debugArgs.ExternalArgs);
+            AssertQuantizedArgs(args, debugArgs.ConvertedArgs);
+            AssertAutotuneArgs(autotuneArgs, debugArgs.ExternalTune);
+            AssertAutotuneArgs(autotuneArgs, debugArgs.ConvertedTune);
+
+            debugArgs.ExternalInput.Should().Be("cooking.train.txt");
+            debugArgs.ConvertedInput.Should().Be("cooking.train.txt");
+            debugArgs.ExternalOutput.Should().Be(outPath);
+            debugArgs.ConvertedOutput.Should().Be(outPath);
         }
         
         [Fact]
@@ -124,7 +230,7 @@ namespace UnitTests
             fastText.IsModelReady().Should().BeTrue();
             fastText.GetModelDimension().Should().Be(100);
 
-            CheckLabels(fastText.GetLabels());
+            AssertLabels(fastText.GetLabels());
 
             File.Exists(outPath + ".bin").Should().BeTrue();
             File.Exists(outPath + ".vec").Should().BeTrue();
@@ -139,7 +245,7 @@ namespace UnitTests
             fastText.IsModelReady().Should().BeTrue();
             fastText.GetModelDimension().Should().Be(100);
 
-            CheckLabels(fastText.GetLabels());
+            AssertLabels(fastText.GetLabels());
         }
 
         [Fact]
@@ -208,7 +314,7 @@ namespace UnitTests
                 .Split(new[] {" ", "\r\n", "\n"}, StringSplitOptions.RemoveEmptyEntries)
                 .Where(x => !x.StartsWith("__label__"))
                 .Distinct().ToArray();
-            var nn = fastText.GetNN("оператор", 2);
+            var nn = fastText.GetNearestNeighbours("оператор", 2);
             nn.Length.Should().Be(2);
             sourceWords.Should().Contain(nn.Select(x => x.Label));
             foreach (var prediction in nn)
@@ -254,7 +360,7 @@ namespace UnitTests
             fastText.IsModelReady().Should().BeTrue();
             fastText.GetModelDimension().Should().Be(300);
             
-            CheckLabels(fastText.GetLabels());
+            AssertLabels(fastText.GetLabels());
             
             File.Exists(outPath + ".bin").Should().BeTrue();
             File.Exists(outPath + ".vec").Should().BeTrue();
@@ -358,12 +464,56 @@ namespace UnitTests
                 actual.ScoreVsTrue[i].gold.Should().BeApproximately(expected.ScoreVsTrue[i].gold, 10e-5f);
             }
         }
-
-
-        private void CheckLabels(string[] modelLabels)
+        
+        private void AssertLabels(string[] modelLabels)
         {
             modelLabels.Length.Should().Be(_labels.Length);
             modelLabels.Should().Contain(_labels);
+        }
+        
+        private void AssertSupervisedArgs(SupervisedArgs expected, SupervisedArgs actual)
+        {
+            actual.lr.Should().Be(expected.lr);
+            actual.lrUpdateRate.Should().Be(expected.lrUpdateRate);
+            actual.dim.Should().Be(expected.dim);
+            actual.ws.Should().Be(expected.ws);
+            actual.epoch.Should().Be(expected.epoch);
+            actual.minCount.Should().Be(expected.minCount);
+            actual.minCountLabel.Should().Be(expected.minCountLabel);
+            actual.neg.Should().Be(expected.neg);
+            actual.wordNgrams.Should().Be(expected.wordNgrams);
+            actual.loss.Should().Be(expected.loss);
+            actual.model.Should().Be(expected.model);
+            actual.bucket.Should().Be(expected.bucket);
+            actual.minn.Should().Be(expected.minn);
+            actual.maxn.Should().Be(expected.maxn);
+            actual.thread.Should().Be(expected.thread);
+            actual.t.Should().Be(expected.t);
+            (actual.LabelPrefix ?? "").Should().Be(expected.LabelPrefix ?? "");
+            actual.verbose.Should().Be(expected.verbose);
+            (actual.PretrainedVectors ?? "").Should().Be(expected.PretrainedVectors ?? "");
+            actual.saveOutput.Should().Be(expected.saveOutput);
+            actual.seed.Should().Be(expected.seed);
+        }
+
+        private void AssertQuantizedArgs(QuantizedSupervisedArgs expected, QuantizedSupervisedArgs actual)
+        {
+            AssertSupervisedArgs(expected, actual);
+
+            actual.qout.Should().Be(expected.qout);
+            actual.retrain.Should().Be(expected.retrain);
+            actual.qnorm.Should().Be(expected.qnorm);
+            actual.cutoff.Should().Be(expected.cutoff);
+            actual.dsub.Should().Be(expected.dsub);
+        }
+
+        private void AssertAutotuneArgs(AutotuneArgs expected, AutotuneArgs actual)
+        {
+            (actual.ValidationFile ?? "").Should().Be(expected.ValidationFile ?? "");
+            (actual.Metric ?? "").Should().Be(expected.Metric ?? "");
+            actual.Predictions.Should().Be(expected.Predictions);
+            actual.Duration.Should().Be(expected.Duration);
+            (actual.ModelSize ?? "").Should().Be(expected.ModelSize ?? "");
         }
 
         public void Dispose()
