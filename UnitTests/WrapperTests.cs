@@ -85,7 +85,7 @@ namespace UnitTests
         [Fact]
         public void CanTrainSupervised()
         {
-            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             string outPath = Path.Combine(_tempDir, "cooking");
             
             var args = new SupervisedArgs();
@@ -116,7 +116,7 @@ namespace UnitTests
         [Fact]
         public void CanAutotuneSupervisedModel()
         {
-            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             string outPath = Path.Combine(_tempDir, "cooking");
 
             var args = new SupervisedArgs
@@ -167,7 +167,7 @@ namespace UnitTests
         [Fact]
         public void CanAutotuneQuantizedSupervisedModel()
         {
-            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             string outPath = Path.Combine(_tempDir, "cooking");
 
             var args = new QuantizedSupervisedArgs
@@ -190,7 +190,7 @@ namespace UnitTests
                 wordNgrams = 2,
                 lrUpdateRate = 110,
                 minCountLabel = 1,
-                
+
                 cutoff = 10000,
                 dsub = 3,
                 retrain = true
@@ -223,7 +223,7 @@ namespace UnitTests
         [Fact]
         public void CanTrainSupervisedWithNoLoggingAndNoArgs()
         {
-            var fastText = new FastTextWrapper();
+            using var fastText = new FastTextWrapper();
             string outPath = Path.Combine(_tempDir, "cooking");
             fastText.Supervised("cooking.train.txt",  outPath);
 
@@ -239,7 +239,7 @@ namespace UnitTests
         [Fact]
         public void CanLoadSupervisedModel()
         {
-            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             fastText.LoadModel(_fixture.ModelPath);
             
             fastText.IsModelReady().Should().BeTrue();
@@ -298,7 +298,7 @@ namespace UnitTests
         [Fact]
         public void CanHandleUtf8()
         {
-            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             string outPath = Path.Combine(_tempDir, "rus");
             fastText.Supervised("data.rus.txt",  outPath, new SupervisedArgs());
 
@@ -326,7 +326,7 @@ namespace UnitTests
         [Fact]
         public void EmptyModelIsNotReady()
         {
-            var fastText = new FastTextWrapper();
+            using var fastText = new FastTextWrapper();
 
             fastText.IsModelReady().Should().BeFalse();
         }
@@ -334,7 +334,7 @@ namespace UnitTests
         [Fact]
         public void CantUsePretrainedVectorsWithDifferentDimension()
         {
-            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             
             string outPath = Path.Combine(_tempDir, "cooking");
             var args = new SupervisedArgs();
@@ -348,15 +348,15 @@ namespace UnitTests
         [Fact]
         public void CanUsePretrainedVectorsForSupervisedModel()
         {
-            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             
             string outPath = Path.Combine(_tempDir, "cooking");
             var args = new SupervisedArgs();
             args.PretrainedVectors = "cooking.unsup.300.vec";
             args.dim = 300;
-
-            fastText.Supervised("cooking.train.txt", outPath, args);
-
+        
+            fastText.Supervised("cooking.train.txt", outPath, args, new AutotuneArgs(), true);
+        
             fastText.IsModelReady().Should().BeTrue();
             fastText.GetModelDimension().Should().Be(300);
             
@@ -392,7 +392,7 @@ namespace UnitTests
         [Fact]
         public void CanTrainSkipgramModel()
         {
-            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             string outPath = Path.Combine(_tempDir, "cooking");
             fastText.Unsupervised(UnsupervisedModel.SkipGram, "cooking.train.nolabels.txt",  outPath);
 
@@ -406,7 +406,7 @@ namespace UnitTests
         [Fact]
         public void CanTrainCbowModel()
         {
-            var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             string outPath = Path.Combine(_tempDir, "cooking");
             fastText.Unsupervised(UnsupervisedModel.CBow, "cooking.train.nolabels.txt",  outPath);
 
@@ -420,11 +420,11 @@ namespace UnitTests
         [Fact]
         public void SkipgramAndCBowLearnDifferentRepresentations()
         {
-            var sg = new FastTextWrapper(loggerFactory: _loggerFactory);
+            using var sg = new FastTextWrapper(loggerFactory: _loggerFactory);
             string outSG = Path.Combine(_tempDir, "cooking");
             sg.Unsupervised(UnsupervisedModel.SkipGram, "cooking.train.nolabels.txt",  outSG);
             
-            var cbow = new FastTextWrapper(loggerFactory: _loggerFactory);
+            using var cbow = new FastTextWrapper(loggerFactory: _loggerFactory);
             string outCbow = Path.Combine(_tempDir, "cooking");
             cbow.Unsupervised(UnsupervisedModel.CBow, "cooking.train.nolabels.txt",  outCbow);
 

@@ -31,6 +31,8 @@ namespace UnitTests
 
         public void Dispose()
         {
+            FastText.Dispose();
+            
             try
             {
                 Directory.Delete(_tempDir, true);
