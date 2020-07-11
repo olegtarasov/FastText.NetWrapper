@@ -43,10 +43,19 @@ namespace FastText.NetWrapper
             public int thread;
             public double t;
             public int verbose;
+            
+            [MarshalAs(UnmanagedType.I1)]
             public bool saveOutput;
+            
+            [MarshalAs(UnmanagedType.I1)]
             public bool qout;
+            
+            [MarshalAs(UnmanagedType.I1)]
             public bool retrain;
+            
+            [MarshalAs(UnmanagedType.I1)]
             public bool qnorm;
+            
             public ulong cutoff;
             public ulong dsub;
         }
