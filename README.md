@@ -12,6 +12,10 @@ binary depending on target platform.
 
 ## What's new
 
+### `1.2.2-preview`
+
+* Merged #20 with new `GetWordVector` method.
+
 ### `1.2.1-preview`
 
 * Added model autotuning with quantization support.

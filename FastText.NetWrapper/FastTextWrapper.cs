@@ -298,9 +298,9 @@ namespace FastText.NetWrapper
 		}
 
 		/// <summary>
-		/// retrieves the word vector
+		/// Vectorizes a word.
 		/// </summary>
-		/// <param name="word">word to vectorize.</param>
+		/// <param name="word">Word to vectorize.</param>
 		/// <returns>A single vector.</returns>
 		public unsafe float[] GetWordVector(string word)
 		{

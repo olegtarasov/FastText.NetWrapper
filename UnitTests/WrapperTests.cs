@@ -273,6 +273,18 @@ namespace UnitTests
                 vec[i].Should().NotBe(0);
             }
         }
+        
+        [Fact]
+        public void CanGetWordVector()
+        {
+            var vec = _fixture.FastText.GetWordVector("pot");
+
+            vec.Length.Should().Be(100);
+            for (int i = 0; i < vec.Length; i++)
+            {
+                vec[i].Should().NotBe(0);
+            }
+        }
 
         [Fact]
         public void CanPredictSingle()
