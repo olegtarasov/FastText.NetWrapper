@@ -44,11 +44,21 @@ namespace FastText.NetWrapper
             public int thread;
             public double t;
             public int verbose;
+            
+            [MarshalAs(UnmanagedType.I1)]
             public bool saveOutput;
+            
             public int seed;
+            
+            [MarshalAs(UnmanagedType.I1)]
             public bool qout;
+            
+            [MarshalAs(UnmanagedType.I1)]
             public bool retrain;
+            
+            [MarshalAs(UnmanagedType.I1)]
             public bool qnorm;
+            
             public ulong cutoff;
             public ulong dsub;
         }
@@ -153,7 +163,7 @@ namespace FastText.NetWrapper
         #region Testing
         
         [DllImport(FastTextDll)]
-        private static extern int Test(IntPtr hPtr, string input, int k, float threshold, IntPtr meterPtr, bool debug);
+        private static extern int Test(IntPtr hPtr, string input, int k, float threshold, IntPtr meterPtr, [MarshalAs(UnmanagedType.I1)] bool debug);
         
         [DllImport(FastTextDll)]
         private static extern int DestroyMeter(IntPtr hPtr);
