@@ -297,6 +297,30 @@ namespace FastText.NetWrapper
 			return result;
 		}
 
+		/// <summary>
+		/// retrieves the word vector
+		/// </summary>
+		/// <param name="word">word to vectorize.</param>
+		/// <returns>A single vector.</returns>
+		public unsafe float[] GetWordVector(string word)
+		{
+			CheckModelLoaded();
+			
+			IntPtr vecPtr;
+			int dim = CheckForErrors(GetWordVector(_fastText, _utf8.GetBytes(word), new IntPtr(&vecPtr)));
+
+			var result = new float[dim];
+			long sz = sizeof(float) * dim;
+			fixed (void* resPtr = &result[0])
+			{
+				Buffer.MemoryCopy(vecPtr.ToPointer(), resPtr, sz, sz);
+			}
+
+			DestroyVector(vecPtr);
+
+			return result;
+		}
+
 		#endregion
 
 		#region Predictions
