@@ -12,7 +12,12 @@ binary depending on target platform.
 
 ## What's new
 
-### Version 1.2.0
+### `1.2.1-preview`
+
+* Added model autotuning with quantization support.
+* Fixed a horrible bug with `bool` marshalling.
+
+### `1.2.0-preview`
 
 Version 1.2.0 introduces a few breaking changes to library API. If you are not ready to migrate, use v. `1.1.0`.
 
@@ -22,11 +27,19 @@ Version 1.2.0 introduces a few breaking changes to library API. If you are not r
 * **❗️Breaking change:️** `FastTextArgs` class can't be constructed directly, use new `SupervisedArgs` and `UnsupervisedArgs` classes.
 * Added an `Unsupervised()` method to train Skipgram or Cbow models.
 
-### Version 1.1.0
+### `1.1.2`
+
+* Fixed a horrible bug with `bool` marshalling on a `1.1.*` branch.
+
+### `1.1.0`, `1.1.1`
 
 * Added new `Supervised()` method as part of streamlining the API.
 * Added new `Test()` method for testing supervised model.
 * Deprecated both `Train()` methods. They will be removed in v. `1.2.0`.
+
+### `1.0.38`
+
+* Fixed a horrible bug with `bool` marshalling on a `1.0.*` branch.
 
 ## Version `1.2.0` migration guide
 
@@ -146,7 +159,26 @@ You can use an optional `UnsupervisedArgs` argument to customize training.
 
 ### Automatic hyperparameter tuning
 
-Coming soon!
+You can use fastText autotune to do an automatic hyperparameter search.
+
+Refer to https://github.com/facebookresearch/fastText/blob/master/docs/autotune.md for complete parameter reference.
+
+Use `AutotuneArgs` to control tuning:
+
+```c#
+var fastText = new FastTextWrapper();
+
+var autotuneArgs = new AutotuneArgs
+{
+    Duration = 30, // in seconds
+    Metric = "precisionAtRecall:30", // supports custom metrics
+    Predictions = 2, // Supports @k predictions
+    ModelSize = "10M", // Set this to train a quantized model and do an additional quantization hyperparameter search
+    ValidationFile = "cooking.valid.txt" // REQUIRED: path to a validation file
+};
+
+fastText.Supervised("cooking.train.txt",  "cooking", new SupervisedArgs(), autotuneArgs);
+```
 
 ### Getting logs from the wrapper
 
