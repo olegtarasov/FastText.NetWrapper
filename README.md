@@ -12,6 +12,10 @@ binary depending on target platform.
 
 ## What's new
 
+### `1.2.3-preview`
+
+* Added supervised model quantization with `Quantize` method.
+
 ### `1.2.2-preview`
 
 * Merged #20 with new `GetWordVector` method.
@@ -150,6 +154,23 @@ using (var stream = new FileStream("precision-recall.svg", FileMode.Create, File
 
 ![](docs/prec-rec.png)
 
+### Supervised model quantization
+
+You can train a new supervised model and quantize it immediatly by replacing `SupervisedArgs` with `QuantizedSupervisedArgs`:
+
+```c#
+var fastText = new FastTextWrapper();
+fastText.Supervised("cooking.train.txt", "cooking", new QuantizedSupervisedArgs());
+```
+
+You can also load an existing model and quantize it:
+
+```c#
+var fastText = new FastTextWrapper();
+fastText.LoadModel("model.bin");
+fastText.Quantize();
+```
+
 ### Training unsupervised models
 
 Use `Unsupervised()` method specifying model type: Skipgram or Cbow:
@@ -177,11 +198,12 @@ var autotuneArgs = new AutotuneArgs
     Duration = 30, // in seconds
     Metric = "precisionAtRecall:30", // supports custom metrics
     Predictions = 2, // Supports @k predictions
-    ModelSize = "10M", // Set this to train a quantized model and do an additional quantization hyperparameter search
+    ModelSize = "10M", // Set this to train a quantized model and do an 
+                       // additional quantization hyperparameter search. Requires QuantizedSupervisedArgs.
     ValidationFile = "cooking.valid.txt" // REQUIRED: path to a validation file
 };
 
-fastText.Supervised("cooking.train.txt",  "cooking", new SupervisedArgs(), autotuneArgs);
+fastText.Supervised("cooking.train.txt",  "cooking", new QuantizedSupervisedArgs(), autotuneArgs);
 ```
 
 ### Getting logs from the wrapper
