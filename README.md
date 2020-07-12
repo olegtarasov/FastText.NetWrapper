@@ -27,7 +27,7 @@ binary depending on target platform.
 
 ### `1.2.0-preview`
 
-Version 1.2.0 introduces a few breaking changes to library API. If you are not ready to migrate, use v. `1.1.0`.
+Version 1.2.0 introduces a few breaking changes to library API. If you are not ready to migrate, use v. `1.1.2`.
 
 * **❗️Breaking change:️** Removed both deprecated `Train()` methods.
 * **❗️Breaking change:️** Removed deprecated `SupervisedArgs` class.
