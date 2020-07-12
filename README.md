@@ -12,9 +12,10 @@ binary depending on target platform.
 
 ## What's new
 
-### `1.2.3-preview`
+### `1.2.3`
 
 * Added supervised model quantization with `Quantize` method.
+* Stable version released! 🎉
 
 ### `1.2.2-preview`
 

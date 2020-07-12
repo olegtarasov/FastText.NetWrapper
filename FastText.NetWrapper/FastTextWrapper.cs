@@ -238,7 +238,7 @@ namespace FastText.NetWrapper
 			else
 			{
 				_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
-				ModelPath = AdjustPath(outputPath, false);
+				ModelPath = AdjustPath(outputPath, !string.IsNullOrEmpty(autotuneArgs.ModelSize));
 			}
 		}
 
