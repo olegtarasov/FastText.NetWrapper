@@ -54,11 +54,24 @@ namespace FastText.NetWrapper
 				manager.LoadNativeLibrary();
 			}
 			
-			_mapper = new MapperConfiguration(config => config.CreateMap<FastTextArgs, FastTextArgsStruct>())
+			_mapper = new MapperConfiguration(config =>
+				{
+					config.ShouldMapProperty = prop => prop.GetMethod.IsPublic || prop.GetMethod.IsAssembly;
+					config.CreateMap<SupervisedArgs, FastTextArgsStruct>();
+					config.CreateMap<QuantizedSupervisedArgs, FastTextArgsStruct>();
+					config.CreateMap<UnsupervisedArgs, FastTextArgsStruct>();
+					config.CreateMap<AutotuneArgs, AutotuneArgsStruct>();
+				})
 				.CreateMapper();
 
 			_fastText = CreateFastText();
 		}
+
+		/// <summary>
+		/// Path to a model binary. Can be empty if model is not trained or loaded, or
+		/// if model was loaded from memory.
+		/// </summary>
+		public string ModelPath { get; private set; } = string.Empty;
 
 		#region Model management
 
@@ -70,6 +83,7 @@ namespace FastText.NetWrapper
 		{
 			CheckForErrors(LoadModel(_fastText, path));
 			_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
+			ModelPath = path;
 		}
 
 		/// <summary>
@@ -80,6 +94,7 @@ namespace FastText.NetWrapper
 		{
 			CheckForErrors(LoadModelData(_fastText, bytes, bytes.Length));
 			_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
+			ModelPath = string.Empty;
 		}
 		
 		#endregion
@@ -131,14 +146,61 @@ namespace FastText.NetWrapper
 
 		/// <summary>
 		/// Trains a new supervised model.
-		/// Use <see cref="FastTextArgs.SupervisedDefaults"/> to get reasonable default args for
-		/// supervised training.
 		/// </summary>
 		/// <param name="inputPath">Path to a training set.</param>
 		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
-		/// <param name="args">Low-level training arguments.</param>
 		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
-		public void Supervised(string inputPath, string outputPath, FastTextArgs args)
+		public void Supervised(string inputPath, string outputPath)
+		{
+			Supervised(inputPath, outputPath, new SupervisedArgs(), new AutotuneArgs());
+		}
+
+		/// <summary>
+		/// Trains a new supervised model.
+		/// </summary>
+		/// <param name="inputPath">Path to a training set.</param>
+		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
+		/// <param name="args">
+		/// Training arguments. If <see cref="SupervisedArgs"/> is passed, a supervised model will be trained.
+		/// If <see cref="QuantizedSupervisedArgs"/> is passed, model will be quantized after training.
+		/// </param>
+		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+		public void Supervised(string inputPath, string outputPath, SupervisedArgs args)
+		{
+			Supervised(inputPath, outputPath, args, new AutotuneArgs());
+		}
+
+		/// <summary>
+		/// Trains a new supervised model. If <see cref="AutotuneArgs.ValidationFile"/> is specified, an automated
+		/// hyperparameter search will be performed.
+		/// </summary>
+		/// <param name="inputPath">Path to a training set.</param>
+		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
+		/// <param name="args">
+		/// Training arguments. If <see cref="SupervisedArgs"/> is passed, a supervised model will be trained.
+		/// If <see cref="QuantizedSupervisedArgs"/> is passed, model will be quantized after training.
+		/// </param>
+		/// <param name="autotuneArgs">Autotune arguments.</param>
+		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+		public void Supervised(string inputPath, string outputPath, SupervisedArgs args, AutotuneArgs autotuneArgs)
+		{
+			Supervised(inputPath, outputPath, args, autotuneArgs, false);
+		}
+
+		/// <summary>
+		/// Trains a new supervised model. If <see cref="AutotuneArgs.ValidationFile"/> is specified, an automated
+		/// hyperparameter search will be performed.
+		/// </summary>
+		/// <param name="inputPath">Path to a training set.</param>
+		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
+		/// <param name="args">
+		/// Training arguments. If <see cref="SupervisedArgs"/> is passed, a supervised model will be trained.
+		/// If <see cref="QuantizedSupervisedArgs"/> is passed, model will be quantized after training.
+		/// </param>
+		/// <param name="autotuneArgs">Autotune arguments.</param>
+		/// <param name="debug">Whether to write debug info.</param>
+		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+		internal void Supervised(string inputPath, string outputPath, SupervisedArgs args, AutotuneArgs autotuneArgs, bool debug)
 		{
 			ValidatePaths(inputPath, outputPath, args.PretrainedVectors);
 
@@ -147,10 +209,97 @@ namespace FastText.NetWrapper
 				_logger?.LogWarning($"{args.model} model type specified in a Supervised() call. Model type will be changed to Supervised.");
 			}
 
+			var quantizedArgs = args as QuantizedSupervisedArgs;
+			if (!string.IsNullOrEmpty(autotuneArgs.ModelSize) && quantizedArgs == null)
+			{
+				throw new InvalidOperationException("You specified model size in autotuneArgs, but passed SupervisedArgs instance. Pass QuantizedSupervisedArgs instead.");
+			}
+
+			bool quantizeWithNoQuantTune = quantizedArgs != null && string.IsNullOrEmpty(autotuneArgs.ModelSize);
+
 			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
 			argsStruct.model = model_name.sup;
-			CheckForErrors(Supervised(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors));
+
+			var autotuneStruct = _mapper.Map<AutotuneArgsStruct>(autotuneArgs);
+			CheckForErrors(Train(
+				_fastText, 
+				inputPath, 
+				quantizeWithNoQuantTune ? null : outputPath, 
+				argsStruct, 
+				autotuneStruct, 
+				args.LabelPrefix, 
+				args.PretrainedVectors, 
+				debug));
+
+			if (quantizeWithNoQuantTune)
+			{
+				Quantize(quantizedArgs, outputPath);
+			}
+			else
+			{
+				_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
+				ModelPath = AdjustPath(outputPath, !string.IsNullOrEmpty(autotuneArgs.ModelSize));
+			}
+		}
+
+		/// <summary>
+		/// Trains a new unsupervised model.
+		/// </summary>
+		/// <param name="model">Type of unsupervised model: Skipgram or Cbow.</param>
+		/// <param name="inputPath">Path to a training set.</param>
+		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
+		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+		public void Unsupervised(UnsupervisedModel model, string inputPath, string outputPath)
+		{
+			Unsupervised(model, inputPath, outputPath, new UnsupervisedArgs());
+		}
+
+		/// <summary>
+		/// Trains a new unsupervised model.
+		/// </summary>
+		/// <param name="model">Type of unsupervised model: Skipgram or Cbow.</param>
+		/// <param name="inputPath">Path to a training set.</param>
+		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
+		/// <param name="args">Low-level training arguments.</param>
+		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
+		public void Unsupervised(UnsupervisedModel model, string inputPath, string outputPath, UnsupervisedArgs args)
+		{
+			ValidatePaths(inputPath, outputPath, args.PretrainedVectors);
+
+			args.model = (ModelName)model;
+			
+			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
+			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, new AutotuneArgsStruct(), args.LabelPrefix, args.PretrainedVectors, false));
+			_maxLabelLen = 0;
+
+			ModelPath = AdjustPath(outputPath, false);
+		}
+
+		public void Quantize(string output = null) => Quantize(new QuantizedSupervisedArgs(), output);
+
+		/// <summary>
+		/// Quantize a loaded model.
+		/// </summary>
+		/// <param name="args">Quantization args.</param>
+		/// <param name="output">Custom output path. Required if model was loaded from memory.</param>
+		public void Quantize(QuantizedSupervisedArgs args, string output = null)
+		{
+			if (!IsModelReady())
+				throw new InvalidOperationException("Model is not loaded or trained!");
+			
+			if (string.IsNullOrEmpty(ModelPath) && string.IsNullOrEmpty(output))
+				throw new InvalidOperationException("Model was loaded from memory. You need to specify output path.");
+
+			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
+			string outPath = AdjustPath(string.IsNullOrEmpty(output) ? ModelPath : output, true);
+			
+			if ((Path.IsPathRooted(output) && !Directory.Exists(Path.GetDirectoryName(outPath))))
+				throw new InvalidOperationException("Output directory doesn't exist!");
+
+			CheckForErrors(Quantize(_fastText, outPath, argsStruct, args.LabelPrefix));
 			_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
+
+			ModelPath = outPath;
 		}
 
 		/// <summary>
@@ -159,7 +308,17 @@ namespace FastText.NetWrapper
 		/// <param name="text">Text to calculate nearest neighbors from.</param>
 		/// <param name="number">Number of neighbors.</param>
 		/// <returns>Nearest neighbor predictions.</returns>
-		public unsafe Prediction[] GetNN(string text, int number)
+		[Obsolete("Please use GetNearestNeighbours method")]
+		public Prediction[] GetNN(string text, int number) => GetNearestNeighbours(text, number);
+		
+		
+		/// <summary>
+		/// Calculate nearest neighbors from input text.
+		/// </summary>
+		/// <param name="text">Text to calculate nearest neighbors from.</param>
+		/// <param name="number">Number of neighbors.</param>
+		/// <returns>Nearest neighbor predictions.</returns>
+		public unsafe Prediction[] GetNearestNeighbours(string text, int number)
 		{
 			CheckModelLoaded();
 
@@ -192,6 +351,30 @@ namespace FastText.NetWrapper
 			
 			IntPtr vecPtr;
 			int dim = CheckForErrors(GetSentenceVector(_fastText, _utf8.GetBytes(text), new IntPtr(&vecPtr)));
+
+			var result = new float[dim];
+			long sz = sizeof(float) * dim;
+			fixed (void* resPtr = &result[0])
+			{
+				Buffer.MemoryCopy(vecPtr.ToPointer(), resPtr, sz, sz);
+			}
+
+			DestroyVector(vecPtr);
+
+			return result;
+		}
+
+		/// <summary>
+		/// Vectorizes a word.
+		/// </summary>
+		/// <param name="word">Word to vectorize.</param>
+		/// <returns>A single vector.</returns>
+		public unsafe float[] GetWordVector(string word)
+		{
+			CheckModelLoaded();
+			
+			IntPtr vecPtr;
+			int dim = CheckForErrors(GetWordVector(_fastText, _utf8.GetBytes(word), new IntPtr(&vecPtr)));
 
 			var result = new float[dim];
 			long sz = sizeof(float) * dim;
@@ -291,55 +474,7 @@ namespace FastText.NetWrapper
 		}
 
 		#endregion
-
-		#region Deprecated
-
-		/// <summary>
-		/// Trains a new supervised classification model.
-		/// </summary>
-		/// <param name="inputPath">Path to a training set.</param>
-		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
-		/// <param name="args">Training arguments.</param>
-		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
-		[Obsolete("This method is deprecated and will be removed in v. 1.1. Use the new `Supervised` method.")]
-		public void Train(string inputPath, string outputPath, SupervisedArgs args)
-		{
-			ValidatePaths(inputPath, outputPath, null);
-
-			var argsStruct = new SupervisedArgsStruct
-							{
-								Epochs = args.Epochs,
-								LearningRate = args.LearningRate,
-								MaxCharNGrams = args.MaxCharNGrams,
-								MinCharNGrams = args.MinCharNGrams,
-								Verbose = args.Verbose,
-								WordNGrams = args.WordNGrams,
-								Threads = args.Threads ?? 0
-							};
-
-			CheckForErrors(TrainSupervised(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix));
-			_maxLabelLen = GetMaxLabelLength(_fastText);
-		}
-
-		/// <summary>
-		/// Trains a new model using low-level FastText arguments.
-		/// </summary>
-		/// <param name="inputPath">Path to a training set.</param>
-		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
-		/// <param name="args">Low-level training arguments.</param>
-		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
-		[Obsolete("This method is obsolete. Use one of the new methods: Supervised")]
-		public void Train(string inputPath, string outputPath, FastTextArgs args)
-		{
-			ValidatePaths(inputPath, outputPath, args.PretrainedVectors);
-
-			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
-			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, args.LabelPrefix, args.PretrainedVectors));
-			_maxLabelLen = GetMaxLabelLength(_fastText);
-		}
-
-		#endregion
-
+		
 		/// <inheritdoc />
 		public void Dispose()
 		{
@@ -350,6 +485,14 @@ namespace FastText.NetWrapper
 
 			DestroyFastText(_fastText);
 			_fastText = IntPtr.Zero;
+		}
+
+		private string AdjustPath(string path, bool isQuantized)
+		{
+			string result = Path.HasExtension(path) ? Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path)) : path;
+			result += isQuantized ? ".ftz" : ".bin";
+
+			return result;
 		}
 
 		private int CheckForErrors(int result)
@@ -411,12 +554,12 @@ namespace FastText.NetWrapper
 				throw new FileNotFoundException($"Invalid input file name!", input);
 			}
 
-			if (string.IsNullOrEmpty(output) || !Directory.Exists(Path.GetDirectoryName(output)))
+			if (string.IsNullOrEmpty(output) || (Path.IsPathRooted(output) && !Directory.Exists(Path.GetDirectoryName(output))))
 			{
 				throw new DirectoryNotFoundException("Invalid output directory!");
 			}
 
-			if (pretrained != null && (!File.Exists(pretrained)))
+			if (pretrained != null && !File.Exists(pretrained))
 			{
 				throw new FileNotFoundException("Invalid pretrained vectors path!", pretrained);
 			}

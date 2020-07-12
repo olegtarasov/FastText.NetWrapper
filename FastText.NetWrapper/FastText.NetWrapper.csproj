@@ -12,6 +12,7 @@
     <PackageVersion>1.0.1</PackageVersion>
     <PackageLicenseUrl>https://raw.githubusercontent.com/olegtarasov/FastText.NetWrapper/master/LICENSE</PackageLicenseUrl>
     <PackageReleaseNotes>Attention! We are deprecating some methods in 1.1 and replacing them with new API. Migration is really straightforward, but please be sure to read https://github.com/olegtarasov/FastText.NetWrapper/blob/master/README.md for guidance.</PackageReleaseNotes>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -19,10 +20,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="9.0.0" />
-    <PackageReference Include="FastText.Native.Linux" Version="1.0.101" />
-    <PackageReference Include="FastText.Native.MacOs" Version="1.0.101" />
-    <PackageReference Include="FastText.Native.Windows" Version="1.0.101" />
+    <PackageReference Include="AutoMapper" Version="10.0.0" />
+    <PackageReference Include="FastText.Native.Linux" Version="1.0.109" />
+    <PackageReference Include="FastText.Native.MacOs" Version="1.0.109" />
+    <PackageReference Include="FastText.Native.Windows" Version="1.0.109" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.5" />
     <PackageReference Include="NativeLibraryManager" Version="1.0.23" />
   </ItemGroup>

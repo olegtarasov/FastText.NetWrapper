@@ -10,18 +10,62 @@ The wrapper comes with bundled precompiled native binaries for all three platfor
 Just add it to your project and start using it! No additional setup required. This library will unpack and call appropriate native 
 binary depending on target platform.
 
+## What's new
+
+### `1.2.3`
+
+* Added supervised model quantization with `Quantize` method.
+* Stable version released! 🎉
+
+### `1.2.2-preview`
+
+* Merged #20 with new `GetWordVector` method.
+
+### `1.2.1-preview`
+
+* Added model autotuning with quantization support.
+* Fixed a horrible bug with `bool` marshalling.
+
+### `1.2.0-preview`
+
+Version 1.2.0 introduces a few breaking changes to library API. If you are not ready to migrate, use v. `1.1.2`.
+
+* **❗️Breaking change:️** Removed both deprecated `Train()` methods.
+* **❗️Breaking change:️** Removed deprecated `SupervisedArgs` class.
+* **❗️Breaking change:️** Removed `FastTextArgs.SupervisedDefaults()` in favor of new `SupervisedArgs` with default constructor.
+* **❗️Breaking change:️** `FastTextArgs` class can't be constructed directly, use new `SupervisedArgs` and `UnsupervisedArgs` classes.
+* Added an `Unsupervised()` method to train Skipgram or Cbow models.
+
+### `1.1.2`
+
+* Fixed a horrible bug with `bool` marshalling on a `1.1.*` branch.
+
+### `1.1.0`, `1.1.1`
+
+* Added new `Supervised()` method as part of streamlining the API.
+* Added new `Test()` method for testing supervised model.
+* Deprecated both `Train()` methods. They will be removed in v. `1.2.0`.
+
+### `1.0.38`
+
+* Fixed a horrible bug with `bool` marshalling on a `1.0.*` branch.
+
+## Version `1.2.0` migration guide
+
+* Instead of old `Train()` methods use `Supervised()` and `Unsupervised()` methods.
+* Instead of `FastTextArgs.SupervisedDefaults()` use `SupervisedArgs` or `Supervised()` overload with 2 arguments.
+
 ## Usage
 
-Version `1.1` brings a redesigned API which closely follows fastText command-line interface. You can still use the old methods, 
-but they are marked as obsolete: their test coverage is limited and no fixes will be issued for these methods if bugs are discovered.
+Library API closely follows fastText command-line interface, so you can jump right in.
 
 ### Supervised model training
 
-The simplest use case is to train a supervised model with default parameters. You just create a `FastTextWrapper` and call `Supervised()`.
+The simplest use case is to train a supervised model with default parameters. We create a `FastTextWrapper` and call `Supervised()`.
 
 ```c#
 var fastText = new FastTextWrapper();
-fastText.Supervised("cooking.train.txt",  "cooking", FastTextArgs.SupervisedDefaults());
+fastText.Supervised("cooking.train.txt",  "cooking");
 ```
 
 Note the arguments:
@@ -30,8 +74,8 @@ Note the arguments:
 https://dl.fbaipublicfiles.com/fasttext/data/cooking.stackexchange.tar.gz. You can find extracted files split into training
 and validation sets in `UnitTests` directory in this repository.
 2. Your model will be saved to `cooking.bin` and `cooking.vec` with pretrained vectors will be placed if the same directory.
-3. Here we use `FastTextArgs.SupervisedDefaults()` to get default argumets for supervised training. It's a good starting point and is
-the same as calling fastText this way:
+3. Here we use `Supervised()` overload with 2 arguments. This means that training will be done with default parameters. 
+It's a good starting point and is the same as calling fastText this way:
 
 ```bash
 ./fasttext supervised -input cooking.train.txt -output cooking
@@ -39,7 +83,7 @@ the same as calling fastText this way:
 
 ### Loading models
 
-Just specify a path to the `.bin` model file:
+Call `LoadModel()` and specify path to the `.bin` model file:
 
 ```c#
 var fastText = new FastTextWrapper();
@@ -48,19 +92,21 @@ fastText.LoadModel("model.bin");
 
 ### Using pretrained vectors
 
-To use pretrained vectors for your supervised model, do this:
+To use pretrained vectors for your supervised model, create an instance of `SupervisedArgs` and customize it:
 
 ```c#
 var fastText = new FastTextWrapper();
             
-var args = FastTextArgs.SupervisedDefaults();
-args.PretrainedVectors = "cooking.unsup.300.vec";
-args.dim = 300;
+var args = new SupervisedArgs
+{
+    PretrainedVectors = "cooking.unsup.300.vec",
+    dim = 300
+};
 
 fastText.Supervised("cooking.train.txt", "cooking", args);
 ```
 
-Here we just get default training arguments, supply a path to pretrained vectors file and adjust vector dimension accordingly.
+Here we get default training arguments, supply a path to pretrained vectors file and adjust vector dimension accordingly.
 
 **Important!** Be sure to always check the dimension of your pretrained vectors! Many vectors on the internet have dimension `300`,
 but default dimension for fastText supervised model training is `100`.
@@ -109,24 +155,70 @@ using (var stream = new FileStream("precision-recall.svg", FileMode.Create, File
 
 ![](docs/prec-rec.png)
 
+### Supervised model quantization
+
+You can train a new supervised model and quantize it immediatly by replacing `SupervisedArgs` with `QuantizedSupervisedArgs`:
+
+```c#
+var fastText = new FastTextWrapper();
+fastText.Supervised("cooking.train.txt", "cooking", new QuantizedSupervisedArgs());
+```
+
+You can also load an existing model and quantize it:
+
+```c#
+var fastText = new FastTextWrapper();
+fastText.LoadModel("model.bin");
+fastText.Quantize();
+```
+
 ### Training unsupervised models
 
-Coming soon!
+Use `Unsupervised()` method specifying model type: Skipgram or Cbow:
 
-For now you can train unsupervised models with a deprecated `FastTextWrapper.Train()` method.
+```c#
+var fastText = new FastTextWrapper();
+fastText.Unsupervised(UnsupervisedModel.SkipGram, "cooking.train.nolabels.txt",  "cooking");
+```
+
+You can use an optional `UnsupervisedArgs` argument to customize training.
 
 ### Automatic hyperparameter tuning
 
-Coming soon!
+You can use fastText autotune to do an automatic hyperparameter search.
+
+Refer to https://github.com/facebookresearch/fastText/blob/master/docs/autotune.md for complete parameter reference.
+
+Use `AutotuneArgs` to control tuning:
+
+```c#
+var fastText = new FastTextWrapper();
+
+var autotuneArgs = new AutotuneArgs
+{
+    Duration = 30, // in seconds
+    Metric = "precisionAtRecall:30", // supports custom metrics
+    Predictions = 2, // Supports @k predictions
+    ModelSize = "10M", // Set this to train a quantized model and do an 
+                       // additional quantization hyperparameter search. Requires QuantizedSupervisedArgs.
+    ValidationFile = "cooking.valid.txt" // REQUIRED: path to a validation file
+};
+
+fastText.Supervised("cooking.train.txt",  "cooking", new QuantizedSupervisedArgs(), autotuneArgs);
+```
 
 ### Getting logs from the wrapper
 
-`FastTextWrapper` can produce a small amount of logs mostly conserning native library management. You can turn logging on by providing an
+`FastTextWrapper` can produce a small amount of logs mostly concerning native library management. You can turn logging on by providing an
 instance of `Microsoft.Extensions.Logging.ILoggerFactory`. In this example we use Serilog with console sink.
 
 You can also inject your standard `IloggerFactory` through .NET Core DI.
 
 ```c#
+// Add the following Nuget packages to your project:
+// * Serilog.Sinks.Console
+// * Serilog.Extensions.Logging 
+
 Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console(theme: ConsoleTheme.None)

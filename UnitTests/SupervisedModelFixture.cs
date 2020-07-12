@@ -16,21 +16,19 @@ namespace UnitTests
             
             FastText = new FastTextWrapper();
             string outPath = Path.Combine(_tempDir, "cooking");
-            FastText.Supervised("cooking.train.txt",  outPath, FastTextArgs.SupervisedDefaults());
-
+            FastText.Supervised("cooking.train.txt",  outPath, new SupervisedArgs());
             FastText.IsModelReady().Should().BeTrue();
 
-            ModelPath = outPath + ".bin";
-
-            File.Exists(ModelPath).Should().BeTrue();
+            File.Exists(FastText.ModelPath).Should().BeTrue();
             File.Exists(outPath + ".vec").Should().BeTrue();
         }
 
         public FastTextWrapper FastText { get; }
-        public string ModelPath { get; set; }
 
         public void Dispose()
         {
+            FastText.Dispose();
+            
             try
             {
                 Directory.Delete(_tempDir, true);

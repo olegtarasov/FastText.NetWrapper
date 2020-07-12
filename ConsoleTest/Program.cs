@@ -31,7 +31,7 @@ namespace ConsoleTest
             string outPath = Path.Combine(tempDir, "cooking.bin");
             var fastText = new FastTextWrapper(loggerFactory: new LoggerFactory(new[] {new SerilogLoggerProvider()}));
 
-            var ftArgs = FastTextArgs.SupervisedDefaults();
+            var ftArgs = new SupervisedArgs();
             ftArgs.epoch = 15;
             ftArgs.lr = 1;
             ftArgs.dim = 300;

@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\Unit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleTest", "ConsoleTest\ConsoleTest.csproj", "{8C2DFE2B-9DCE-4236-B933-0D46ED804572}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NugetConsoleTest", "NugetConsoleTest\NugetConsoleTest.csproj", "{86AB2CB1-9F72-4BC8-8090-EE14494F5EBE}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -29,10 +27,6 @@ Global
 		{8C2DFE2B-9DCE-4236-B933-0D46ED804572}.Debug|x64.Build.0 = Debug|Any CPU
 		{8C2DFE2B-9DCE-4236-B933-0D46ED804572}.Release|x64.ActiveCfg = Release|Any CPU
 		{8C2DFE2B-9DCE-4236-B933-0D46ED804572}.Release|x64.Build.0 = Release|Any CPU
-		{86AB2CB1-9F72-4BC8-8090-EE14494F5EBE}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{86AB2CB1-9F72-4BC8-8090-EE14494F5EBE}.Debug|x64.Build.0 = Debug|Any CPU
-		{86AB2CB1-9F72-4BC8-8090-EE14494F5EBE}.Release|x64.ActiveCfg = Release|Any CPU
-		{86AB2CB1-9F72-4BC8-8090-EE14494F5EBE}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
