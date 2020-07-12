@@ -67,6 +67,12 @@ namespace FastText.NetWrapper
 			_fastText = CreateFastText();
 		}
 
+		/// <summary>
+		/// Path to a model binary. Can be empty if model is not trained or loaded, or
+		/// if model was loaded from memory.
+		/// </summary>
+		public string ModelPath { get; private set; } = string.Empty;
+
 		#region Model management
 
 		/// <summary>
@@ -77,6 +83,7 @@ namespace FastText.NetWrapper
 		{
 			CheckForErrors(LoadModel(_fastText, path));
 			_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
+			ModelPath = path;
 		}
 
 		/// <summary>
@@ -87,6 +94,7 @@ namespace FastText.NetWrapper
 		{
 			CheckForErrors(LoadModelData(_fastText, bytes, bytes.Length));
 			_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
+			ModelPath = string.Empty;
 		}
 		
 		#endregion
@@ -152,7 +160,10 @@ namespace FastText.NetWrapper
 		/// </summary>
 		/// <param name="inputPath">Path to a training set.</param>
 		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
-		/// <param name="args">Low-level training arguments.</param>
+		/// <param name="args">
+		/// Training arguments. If <see cref="SupervisedArgs"/> is passed, a supervised model will be trained.
+		/// If <see cref="QuantizedSupervisedArgs"/> is passed, model will be quantized after training.
+		/// </param>
 		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
 		public void Supervised(string inputPath, string outputPath, SupervisedArgs args)
 		{
@@ -160,11 +171,15 @@ namespace FastText.NetWrapper
 		}
 
 		/// <summary>
-		/// Trains a new supervised model.
+		/// Trains a new supervised model. If <see cref="AutotuneArgs.ValidationFile"/> is specified, an automated
+		/// hyperparameter search will be performed.
 		/// </summary>
 		/// <param name="inputPath">Path to a training set.</param>
 		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
-		/// <param name="args">Low-level training arguments.</param>
+		/// <param name="args">
+		/// Training arguments. If <see cref="SupervisedArgs"/> is passed, a supervised model will be trained.
+		/// If <see cref="QuantizedSupervisedArgs"/> is passed, model will be quantized after training.
+		/// </param>
 		/// <param name="autotuneArgs">Autotune arguments.</param>
 		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
 		public void Supervised(string inputPath, string outputPath, SupervisedArgs args, AutotuneArgs autotuneArgs)
@@ -173,11 +188,15 @@ namespace FastText.NetWrapper
 		}
 
 		/// <summary>
-		/// Trains a new supervised model.
+		/// Trains a new supervised model. If <see cref="AutotuneArgs.ValidationFile"/> is specified, an automated
+		/// hyperparameter search will be performed.
 		/// </summary>
 		/// <param name="inputPath">Path to a training set.</param>
 		/// <param name="outputPath">Path to write the model to (excluding extension).</param>
-		/// <param name="args">Low-level training arguments.</param>
+		/// <param name="args">
+		/// Training arguments. If <see cref="SupervisedArgs"/> is passed, a supervised model will be trained.
+		/// If <see cref="QuantizedSupervisedArgs"/> is passed, model will be quantized after training.
+		/// </param>
 		/// <param name="autotuneArgs">Autotune arguments.</param>
 		/// <param name="debug">Whether to write debug info.</param>
 		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
@@ -199,9 +218,24 @@ namespace FastText.NetWrapper
 			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
 			argsStruct.model = model_name.sup;
 
-			var autotuneStruct = _mapper.Map<AutotuneArgsStruct>(autotuneArgs ?? new AutotuneArgs());
-			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, autotuneStruct, args.LabelPrefix, args.PretrainedVectors, debug));
-			_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
+			var autotuneStruct = _mapper.Map<AutotuneArgsStruct>(autotuneArgs);
+			CheckForErrors(Train(
+				_fastText, 
+				inputPath, 
+				quantizedArgs != null ? null : outputPath, 
+				argsStruct, 
+				autotuneStruct, 
+				args.LabelPrefix, 
+				args.PretrainedVectors, 
+				debug));
+
+			if (quantizedArgs == null)
+			{
+				_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
+				ModelPath = AdjustPath(outputPath, false);
+			}
+			else
+				Quantize(quantizedArgs, outputPath);
 		}
 
 		/// <summary>
@@ -232,7 +266,36 @@ namespace FastText.NetWrapper
 			
 			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
 			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, new AutotuneArgsStruct(), args.LabelPrefix, args.PretrainedVectors, false));
+			_maxLabelLen = 0;
+
+			ModelPath = AdjustPath(outputPath, false);
+		}
+
+		public void Quantize(string output = null) => Quantize(new QuantizedSupervisedArgs(), output);
+
+		/// <summary>
+		/// Quantize a loaded model.
+		/// </summary>
+		/// <param name="args">Quantization args.</param>
+		/// <param name="output">Custom output path. Required if model was loaded from memory.</param>
+		public void Quantize(QuantizedSupervisedArgs args, string output = null)
+		{
+			if (!IsModelReady())
+				throw new InvalidOperationException("Model is not loaded or trained!");
+			
+			if (string.IsNullOrEmpty(ModelPath) && string.IsNullOrEmpty(output))
+				throw new InvalidOperationException("Model was loaded from memory. You need to specify output path.");
+
+			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
+			string outPath = AdjustPath(string.IsNullOrEmpty(output) ? ModelPath : output, true);
+			
+			if ((Path.IsPathRooted(output) && !Directory.Exists(Path.GetDirectoryName(outPath))))
+				throw new InvalidOperationException("Output directory doesn't exist!");
+
+			CheckForErrors(Quantize(_fastText, outPath, argsStruct, args.LabelPrefix));
 			_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
+
+			ModelPath = outPath;
 		}
 
 		/// <summary>
@@ -420,6 +483,14 @@ namespace FastText.NetWrapper
 			_fastText = IntPtr.Zero;
 		}
 
+		private string AdjustPath(string path, bool isQuantized)
+		{
+			string result = Path.HasExtension(path) ? Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path)) : path;
+			result += isQuantized ? ".ftz" : ".bin";
+
+			return result;
+		}
+
 		private int CheckForErrors(int result)
 		{
 			if (result != -1)
@@ -479,12 +550,12 @@ namespace FastText.NetWrapper
 				throw new FileNotFoundException($"Invalid input file name!", input);
 			}
 
-			if (string.IsNullOrEmpty(output) || !Directory.Exists(Path.GetDirectoryName(output)))
+			if (string.IsNullOrEmpty(output) || (Path.IsPathRooted(output) && !Directory.Exists(Path.GetDirectoryName(output))))
 			{
 				throw new DirectoryNotFoundException("Invalid output directory!");
 			}
 
-			if (pretrained != null && (!File.Exists(pretrained)))
+			if (pretrained != null && !File.Exists(pretrained))
 			{
 				throw new FileNotFoundException("Invalid pretrained vectors path!", pretrained);
 			}

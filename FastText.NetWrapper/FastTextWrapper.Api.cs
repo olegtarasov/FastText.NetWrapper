@@ -141,6 +141,9 @@ namespace FastText.NetWrapper
         private static extern int Train(IntPtr hPtr, string input, string output, FastTextArgsStruct trainArgs, AutotuneArgsStruct tuneArgs, string labelPrefix, string pretrainedVectors, [MarshalAs(UnmanagedType.I1)] bool debug);
         
         [DllImport(FastTextDll)]
+        private static extern int Quantize(IntPtr hPtr, string output, FastTextArgsStruct trainArgs, string label);
+        
+        [DllImport(FastTextDll)]
         private static extern int GetNN(IntPtr hPtr, byte[] input, IntPtr predictedLabels, float[] predictedProbabilities, int n);
 
         [DllImport(FastTextDll)]

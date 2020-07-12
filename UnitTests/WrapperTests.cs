@@ -95,6 +95,7 @@ namespace UnitTests
 
             fastText.IsModelReady().Should().BeTrue();
             fastText.GetModelDimension().Should().Be(100);
+            fastText.ModelPath.Should().Be(outPath + ".bin");
 
             AssertLabels(fastText.GetLabels());
 
@@ -113,6 +114,177 @@ namespace UnitTests
             debugArgs.ConvertedOutput.Should().Be(outPath);
         }
         
+        [Fact]
+        public void CanTrainSupervisedAndQuantize()
+        {
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            string outPath = Path.Combine(_tempDir, "cooking");
+            
+            var args = new QuantizedSupervisedArgs();
+            var tuneArgs = new AutotuneArgs();
+            
+            fastText.Supervised("cooking.train.txt", outPath, args, tuneArgs, true);
+
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+            fastText.ModelPath.Should().Be(outPath + ".ftz");
+
+            AssertLabels(fastText.GetLabels());
+
+            File.Exists(outPath + ".ftz").Should().BeTrue();
+            File.Exists(outPath + ".bin").Should().BeFalse();
+            File.Exists(outPath + ".vec").Should().BeFalse();
+
+            var debugArgs = DebugArgs.Load("_train.txt");
+            AssertSupervisedArgs(args, debugArgs.ExternalArgs);
+            AssertSupervisedArgs(args, debugArgs.ConvertedArgs);
+            AssertAutotuneArgs(tuneArgs, debugArgs.ExternalTune);
+            AssertAutotuneArgs(tuneArgs, debugArgs.ConvertedTune);
+
+            debugArgs.ExternalInput.Should().Be("cooking.train.txt");
+            debugArgs.ConvertedInput.Should().Be("cooking.train.txt");
+        }
+        
+        [Fact]
+        public void CanTrainSupervisedWithRelativeOutput()
+        {
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            
+            var args = new SupervisedArgs();
+            var tuneArgs = new AutotuneArgs();
+            
+            fastText.Supervised("cooking.train.txt",  "cooking", args, tuneArgs, true);
+
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+            fastText.ModelPath.Should().Be("cooking.bin");
+
+            AssertLabels(fastText.GetLabels());
+
+            File.Exists("cooking.bin").Should().BeTrue();
+            File.Exists("cooking.vec").Should().BeTrue();
+
+            File.Delete("cooking.bin");
+            File.Delete("cooking.vec");
+        }
+
+        [Fact]
+        public void CanTrainSupervisedWithNoLoggingAndNoArgs()
+        {
+            using var fastText = new FastTextWrapper();
+            string outPath = Path.Combine(_tempDir, "cooking");
+            fastText.Supervised("cooking.train.txt",  outPath);
+
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+            fastText.ModelPath.Should().Be(outPath + ".bin");
+
+            AssertLabels(fastText.GetLabels());
+
+            File.Exists(outPath + ".bin").Should().BeTrue();
+            File.Exists(outPath + ".vec").Should().BeTrue();
+        }
+
+        [Fact]
+        public void CantTrainSupervisedWithPretrainedVectorsWithDifferentDimension()
+        {
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            
+            string outPath = Path.Combine(_tempDir, "cooking");
+            var args = new SupervisedArgs();
+            args.PretrainedVectors = "cooking.unsup.300.vec";
+
+            fastText.Invoking(x => x.Supervised("cooking.train.txt", outPath, args))
+                .Should().Throw<NativeLibraryException>()
+                .WithMessage("Dimension of pretrained vectors (300) does not match dimension (100)!");
+        }
+
+        [Fact]
+        public void CanTrainSupervisedWithPretrainedVectors()
+        {
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            
+            string outPath = Path.Combine(_tempDir, "cooking");
+            var args = new SupervisedArgs();
+            args.PretrainedVectors = "cooking.unsup.300.vec";
+            args.dim = 300;
+        
+            fastText.Supervised("cooking.train.txt", outPath, args, new AutotuneArgs(), true);
+        
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(300);
+            fastText.ModelPath.Should().Be(outPath + ".bin");
+            
+            AssertLabels(fastText.GetLabels());
+            
+            File.Exists(outPath + ".bin").Should().BeTrue();
+            File.Exists(outPath + ".vec").Should().BeTrue();
+        }
+        
+        [Fact]
+        public void CanTrainSkipgramModel()
+        {
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            string outPath = Path.Combine(_tempDir, "cooking");
+            fastText.Unsupervised(UnsupervisedModel.SkipGram, "cooking.train.nolabels.txt",  outPath);
+
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+            fastText.ModelPath.Should().Be(outPath + ".bin");
+
+            File.Exists(outPath + ".bin").Should().BeTrue();
+            File.Exists(outPath + ".vec").Should().BeTrue();
+        }
+        
+        [Fact]
+        public void CanTrainCbowModel()
+        {
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            string outPath = Path.Combine(_tempDir, "cooking");
+            fastText.Unsupervised(UnsupervisedModel.CBow, "cooking.train.nolabels.txt",  outPath);
+
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+            fastText.ModelPath.Should().Be(outPath + ".bin");
+
+            File.Exists(outPath + ".bin").Should().BeTrue();
+            File.Exists(outPath + ".vec").Should().BeTrue();
+        }
+
+        [Fact]
+        public void SkipgramAndCBowLearnDifferentRepresentations()
+        {
+            using var sg = new FastTextWrapper(loggerFactory: _loggerFactory);
+            string outSG = Path.Combine(_tempDir, "cooking");
+            sg.Unsupervised(UnsupervisedModel.SkipGram, "cooking.train.nolabels.txt",  outSG);
+            
+            using var cbow = new FastTextWrapper(loggerFactory: _loggerFactory);
+            string outCbow = Path.Combine(_tempDir, "cooking");
+            cbow.Unsupervised(UnsupervisedModel.CBow, "cooking.train.nolabels.txt",  outCbow);
+
+            var nnSg = sg.GetNearestNeighbours("pot", 10);
+            var nnCbow = cbow.GetNearestNeighbours("pot", 10);
+            var nnSup = _fixture.FastText.GetNearestNeighbours("pot", 10);
+
+            void CheckPair(Prediction[] first, Prediction[] second)
+            {
+                int samePredictions = 0;
+
+                foreach (var prediction in first)
+                {
+                    if (second.Any(x => x.Label == prediction.Label))
+                        samePredictions++;
+                }
+
+                // We want less than a half of same predictions.
+                samePredictions.Should().BeLessThan(first.Length / 2);
+            }
+            
+            CheckPair(nnSg, nnCbow);
+            CheckPair(nnSg, nnSup);
+            CheckPair(nnCbow, nnSup);
+        }
+
         [Fact]
         public void CanAutotuneSupervisedModel()
         {
@@ -150,6 +322,13 @@ namespace UnitTests
             };
             
             fastText.Supervised("cooking.train.txt",  outPath, args, autotuneArgs, true);
+            
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+            fastText.ModelPath.Should().Be(outPath + ".bin");
+            
+            File.Exists(outPath + ".bin").Should().BeTrue();
+            File.Exists(outPath + ".vec").Should().BeTrue();
 
             var debugArgs = DebugArgs.Load("_train.txt");
             
@@ -206,6 +385,14 @@ namespace UnitTests
             };
             
             fastText.Supervised("cooking.train.txt",  outPath, args, autotuneArgs, true);
+            
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+            fastText.ModelPath.Should().Be(outPath + ".ftz");
+            
+            File.Exists(outPath + ".ftz").Should().BeTrue();
+            File.Exists(outPath + ".vec").Should().BeTrue();
+
 
             var debugArgs = DebugArgs.Load("_train.txt");
             
@@ -219,33 +406,41 @@ namespace UnitTests
             debugArgs.ExternalOutput.Should().Be(outPath);
             debugArgs.ConvertedOutput.Should().Be(outPath);
         }
-        
-        [Fact]
-        public void CanTrainSupervisedWithNoLoggingAndNoArgs()
-        {
-            using var fastText = new FastTextWrapper();
-            string outPath = Path.Combine(_tempDir, "cooking");
-            fastText.Supervised("cooking.train.txt",  outPath);
-
-            fastText.IsModelReady().Should().BeTrue();
-            fastText.GetModelDimension().Should().Be(100);
-
-            AssertLabels(fastText.GetLabels());
-
-            File.Exists(outPath + ".bin").Should().BeTrue();
-            File.Exists(outPath + ".vec").Should().BeTrue();
-        }
 
         [Fact]
         public void CanLoadSupervisedModel()
         {
             using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
-            fastText.LoadModel(_fixture.ModelPath);
+            fastText.LoadModel(_fixture.FastText.ModelPath);
             
             fastText.IsModelReady().Should().BeTrue();
             fastText.GetModelDimension().Should().Be(100);
 
             AssertLabels(fastText.GetLabels());
+        }
+
+        [Fact]
+        public void CanQuantizeLoadedSupervisedModel()
+        {
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            fastText.LoadModel(_fixture.FastText.ModelPath);
+            
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+
+            AssertLabels(fastText.GetLabels());
+            
+            string newPath = Path.Combine(Path.GetDirectoryName(_fixture.FastText.ModelPath), Path.GetFileNameWithoutExtension(_fixture.FastText.ModelPath));
+            
+            fastText.Quantize();
+
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+            fastText.ModelPath.Should().Be(newPath + ".ftz");
+            
+            File.Exists(newPath + ".ftz").Should().BeTrue();
+            File.Exists(newPath + ".vec").Should().BeTrue();
+
         }
 
         [Fact]
@@ -273,7 +468,7 @@ namespace UnitTests
                 vec[i].Should().NotBe(0);
             }
         }
-        
+
         [Fact]
         public void CanGetWordVector()
         {
@@ -344,41 +539,6 @@ namespace UnitTests
         }
 
         [Fact]
-        public void CantUsePretrainedVectorsWithDifferentDimension()
-        {
-            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
-            
-            string outPath = Path.Combine(_tempDir, "cooking");
-            var args = new SupervisedArgs();
-            args.PretrainedVectors = "cooking.unsup.300.vec";
-
-            fastText.Invoking(x => x.Supervised("cooking.train.txt", outPath, args))
-                .Should().Throw<NativeLibraryException>()
-                .WithMessage("Dimension of pretrained vectors (300) does not match dimension (100)!");
-        }
-        
-        [Fact]
-        public void CanUsePretrainedVectorsForSupervisedModel()
-        {
-            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
-            
-            string outPath = Path.Combine(_tempDir, "cooking");
-            var args = new SupervisedArgs();
-            args.PretrainedVectors = "cooking.unsup.300.vec";
-            args.dim = 300;
-        
-            fastText.Supervised("cooking.train.txt", outPath, args, new AutotuneArgs(), true);
-        
-            fastText.IsModelReady().Should().BeTrue();
-            fastText.GetModelDimension().Should().Be(300);
-            
-            AssertLabels(fastText.GetLabels());
-            
-            File.Exists(outPath + ".bin").Should().BeTrue();
-            File.Exists(outPath + ".vec").Should().BeTrue();
-        }
-
-        [Fact]
         public void CanTestSupervisedModel()
         {
             var result = _fixture.FastText.TestInternal("cooking.valid.txt", 1, 0.0f, true);
@@ -401,67 +561,7 @@ namespace UnitTests
             }
         }
 
-        [Fact]
-        public void CanTrainSkipgramModel()
-        {
-            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
-            string outPath = Path.Combine(_tempDir, "cooking");
-            fastText.Unsupervised(UnsupervisedModel.SkipGram, "cooking.train.nolabels.txt",  outPath);
 
-            fastText.IsModelReady().Should().BeTrue();
-            fastText.GetModelDimension().Should().Be(100);
-
-            File.Exists(outPath + ".bin").Should().BeTrue();
-            File.Exists(outPath + ".vec").Should().BeTrue();
-        }
-        
-        [Fact]
-        public void CanTrainCbowModel()
-        {
-            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
-            string outPath = Path.Combine(_tempDir, "cooking");
-            fastText.Unsupervised(UnsupervisedModel.CBow, "cooking.train.nolabels.txt",  outPath);
-
-            fastText.IsModelReady().Should().BeTrue();
-            fastText.GetModelDimension().Should().Be(100);
-
-            File.Exists(outPath + ".bin").Should().BeTrue();
-            File.Exists(outPath + ".vec").Should().BeTrue();
-        }
-
-        [Fact]
-        public void SkipgramAndCBowLearnDifferentRepresentations()
-        {
-            using var sg = new FastTextWrapper(loggerFactory: _loggerFactory);
-            string outSG = Path.Combine(_tempDir, "cooking");
-            sg.Unsupervised(UnsupervisedModel.SkipGram, "cooking.train.nolabels.txt",  outSG);
-            
-            using var cbow = new FastTextWrapper(loggerFactory: _loggerFactory);
-            string outCbow = Path.Combine(_tempDir, "cooking");
-            cbow.Unsupervised(UnsupervisedModel.CBow, "cooking.train.nolabels.txt",  outCbow);
-
-            var nnSg = sg.GetNearestNeighbours("pot", 10);
-            var nnCbow = cbow.GetNearestNeighbours("pot", 10);
-            var nnSup = _fixture.FastText.GetNearestNeighbours("pot", 10);
-
-            void CheckPair(Prediction[] first, Prediction[] second)
-            {
-                int samePredictions = 0;
-
-                foreach (var prediction in first)
-                {
-                    if (second.Any(x => x.Label == prediction.Label))
-                        samePredictions++;
-                }
-
-                // We want less than a half of same predictions.
-                samePredictions.Should().BeLessThan(first.Length / 2);
-            }
-            
-            CheckPair(nnSg, nnCbow);
-            CheckPair(nnSg, nnSup);
-            CheckPair(nnCbow, nnSup);
-        }
 
         private void AssertMetrics(Metrics actual, Metrics expected)
         {
