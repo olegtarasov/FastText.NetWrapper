@@ -324,7 +324,7 @@ namespace UnitTests
             fastText.Supervised("cooking.train.txt",  outPath, args, autotuneArgs, true);
             
             fastText.IsModelReady().Should().BeTrue();
-            fastText.GetModelDimension().Should().Be(100);
+            fastText.GetModelDimension().Should().Be(250);
             fastText.ModelPath.Should().Be(outPath + ".bin");
             
             File.Exists(outPath + ".bin").Should().BeTrue();
@@ -387,7 +387,7 @@ namespace UnitTests
             fastText.Supervised("cooking.train.txt",  outPath, args, autotuneArgs, true);
             
             fastText.IsModelReady().Should().BeTrue();
-            fastText.GetModelDimension().Should().Be(100);
+            fastText.GetModelDimension().Should().Be(250);
             fastText.ModelPath.Should().Be(outPath + ".ftz");
             
             File.Exists(outPath + ".ftz").Should().BeTrue();

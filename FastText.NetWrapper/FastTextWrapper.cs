@@ -215,6 +215,8 @@ namespace FastText.NetWrapper
 				throw new InvalidOperationException("You specified model size in autotuneArgs, but passed SupervisedArgs instance. Pass QuantizedSupervisedArgs instead.");
 			}
 
+			bool quantizeWithNoQuantTune = quantizedArgs != null && string.IsNullOrEmpty(autotuneArgs.ModelSize);
+
 			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
 			argsStruct.model = model_name.sup;
 
@@ -222,20 +224,22 @@ namespace FastText.NetWrapper
 			CheckForErrors(Train(
 				_fastText, 
 				inputPath, 
-				quantizedArgs != null ? null : outputPath, 
+				quantizeWithNoQuantTune ? null : outputPath, 
 				argsStruct, 
 				autotuneStruct, 
 				args.LabelPrefix, 
 				args.PretrainedVectors, 
 				debug));
 
-			if (quantizedArgs == null)
+			if (quantizeWithNoQuantTune)
+			{
+				Quantize(quantizedArgs, outputPath);
+			}
+			else
 			{
 				_maxLabelLen = CheckForErrors(GetMaxLabelLength(_fastText));
 				ModelPath = AdjustPath(outputPath, false);
 			}
-			else
-				Quantize(quantizedArgs, outputPath);
 		}
 
 		/// <summary>
