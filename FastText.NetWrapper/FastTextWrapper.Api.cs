@@ -20,6 +20,7 @@ namespace FastText.NetWrapper
             public int Predictions;
             public int Duration;
             public string ModelSize;
+            public int Verbose;
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -138,7 +139,7 @@ namespace FastText.NetWrapper
         #region FastText commands
 
         [DllImport(FastTextDll)]
-        private static extern int Train(IntPtr hPtr, string input, string output, FastTextArgsStruct trainArgs, AutotuneArgsStruct tuneArgs, string labelPrefix, string pretrainedVectors, [MarshalAs(UnmanagedType.I1)] bool debug);
+        private static extern int Train(IntPtr hPtr, string input, string output, FastTextArgsStruct trainArgs, AutotuneArgsStruct tuneArgs, TrainProgressCallback trainCallback, AutotuneProgressCallback autotuneCallback, string labelPrefix, string pretrainedVectors, [MarshalAs(UnmanagedType.I1)] bool debug);
         
         [DllImport(FastTextDll)]
         private static extern int Quantize(IntPtr hPtr, string output, FastTextArgsStruct trainArgs, string label);

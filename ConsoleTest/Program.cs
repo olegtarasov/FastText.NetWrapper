@@ -10,6 +10,7 @@ using OxyPlot.Series;
 using Serilog;
 using Serilog.Extensions.Logging;
 using Serilog.Sinks.SystemConsole.Themes;
+using ShellProgressBar;
 
 namespace ConsoleTest
 {
@@ -31,14 +32,25 @@ namespace ConsoleTest
             string outPath = Path.Combine(tempDir, "cooking.bin");
             var fastText = new FastTextWrapper(loggerFactory: new LoggerFactory(new[] {new SerilogLoggerProvider()}));
 
-            var ftArgs = new SupervisedArgs();
-            ftArgs.epoch = 15;
-            ftArgs.lr = 1;
-            ftArgs.dim = 300;
-            ftArgs.wordNgrams = 2;
-            ftArgs.minn = 3;
-            ftArgs.maxn = 6;
-            fastText.Supervised("cooking.train.txt",  outPath, ftArgs);
+            using (var pBar = new ProgressBar(100, "Training"))
+            {
+                var ftArgs = new SupervisedArgs
+                {
+                    epoch = 15,
+                    lr = 1,
+                    dim = 300,
+                    wordNgrams = 2,
+                    minn = 3,
+                    maxn = 6,
+                    verbose = 0,
+                    TrainProgressCallback = (progress, loss, wst, lr, eta) =>
+                    {
+                        pBar.Tick((int)Math.Ceiling(progress * 100), $"Loss: {loss:N3}, words/thread/sec: {wst}, LR: {lr:N5}, ETA: {eta}");
+                    }
+                };
+
+                fastText.Supervised("cooking.train.txt", outPath, ftArgs);
+            }
 
             try
             {
@@ -47,6 +59,8 @@ namespace ConsoleTest
             catch
             {
             }
+            
+            log.Information("Validating model on the test set");
             
             var result = fastText.TestInternal("cooking.valid.txt", 1, 0.0f, true);
             

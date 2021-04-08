@@ -253,6 +253,11 @@ namespace FastText.NetWrapper
         /// pretrained word vectors for supervised learning []
         /// </summary>
         public string PretrainedVectors { get; set; }
+        
+        /// <summary>
+        /// Optional training progress callback.
+        /// </summary>
+        public TrainProgressCallback TrainProgressCallback { get; set; }
     }
 
     /// <summary>
@@ -304,6 +309,16 @@ namespace FastText.NetWrapper
         /// for details.
         /// </summary>
         public string ModelSize { get; set; } = "";
+
+        /// <summary>
+        /// Autotune console verbosity. 0 for silent, > 0 for verbose.
+        /// </summary>
+        public int Verbose { get; set; } = 2;
+
+        /// <summary>
+        /// Optional autotune progress callback.
+        /// </summary>
+        public AutotuneProgressCallback AutotuneProgressCallback { get; set; }
     }
 
     internal class DebugArgs
@@ -362,6 +377,7 @@ namespace FastText.NetWrapper
             result.ExternalTune.Predictions = int.Parse(lines[++idx]);
             result.ExternalTune.Duration = int.Parse(lines[++idx]);
             result.ExternalTune.ModelSize = lines[++idx];
+            result.ExternalTune.Verbose = int.Parse(lines[++idx]);
             
             if (lines[++idx] != "= args")
                 throw new InvalidOperationException();
@@ -401,6 +417,7 @@ namespace FastText.NetWrapper
             result.ConvertedTune.Predictions = int.Parse(lines[++idx]);
             result.ConvertedTune.Duration = int.Parse(lines[++idx]);
             result.ConvertedTune.ModelSize = lines[++idx];
+            result.ConvertedTune.Verbose = int.Parse(lines[++idx]);
 
             return result;
         }

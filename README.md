@@ -12,6 +12,10 @@ binary depending on target platform.
 
 ## What's new
 
+### `1.2.4`
+
+* Added progress callbacks for model training and autotuning.
+
 ### `1.2.3`
 
 * Added supervised model quantization with `Quantize` method.
@@ -206,6 +210,37 @@ var autotuneArgs = new AutotuneArgs
 
 fastText.Supervised("cooking.train.txt",  "cooking", new QuantizedSupervisedArgs(), autotuneArgs);
 ```
+
+### Progress callbacks
+
+You can get progress callbacks from the native library. To do so, add a handler to `(Un)SupervisedArgs.TrainProgressCallback` for
+simple training, or to `AutotuneArgs.AutotuneProgressCallback` for hyperparameter tuning.
+
+See `ConsoleTest` project for an example of using training callbacks with `ShellProgressBar` library:
+
+```c#
+using (var pBar = new ProgressBar(100, "Training"))
+{
+    var ftArgs = new SupervisedArgs
+    {
+        // ... Other args
+        verbose = 0,
+        TrainProgressCallback = (progress, loss, wst, lr, eta) =>
+        {
+            pBar.Tick((int)Math.Ceiling(progress * 100), $"Loss: {loss}, words/thread/sec: {wst}, LR: {lr}, ETA: {eta}");
+        }
+    };
+
+    fastText.Supervised("cooking.train.txt", outPath, ftArgs);
+}
+```
+
+![](docs/progress.gif)
+
+### Stopping `stderr` output
+
+Native FastText library reports training progress to `stderr` by default. You can turn off this output by setting
+`(Un)SupervisedArgs.verbose = 0` for simple training and `AutotuneArgs.Verbose = 0` for hyperparameter tuning.
 
 ### Getting logs from the wrapper
 

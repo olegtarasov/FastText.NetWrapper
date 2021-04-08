@@ -38,7 +38,7 @@ namespace UnitTests
         public void StructureSizesAreCorrect()
         {
             Marshal.SizeOf<FastTextWrapper.FastTextArgsStruct>().Should().Be(100);
-            Marshal.SizeOf<FastTextWrapper.AutotuneArgsStruct>().Should().Be(32);
+            Marshal.SizeOf<FastTextWrapper.AutotuneArgsStruct>().Should().Be(36);
             Marshal.SizeOf<FastTextWrapper.TestMetrics>().Should().Be(48);
             Marshal.SizeOf<FastTextWrapper.TestMeter>().Should().Be(40);
         }
@@ -184,6 +184,34 @@ namespace UnitTests
             File.Exists(outPath + ".bin").Should().BeTrue();
             File.Exists(outPath + ".vec").Should().BeTrue();
         }
+        
+        [Fact]
+        public void CanTrainSupervisedWithProgressCallback()
+        {
+            using var fastText = new FastTextWrapper();
+            string outPath = Path.Combine(_tempDir, "cooking");
+            int callNum = 0;
+
+            var args = new SupervisedArgs
+            {
+                TrainProgressCallback = (progress, loss, wst, lr, eta) =>
+                {
+                    callNum++;
+                }
+            };
+            
+            fastText.Supervised("cooking.train.txt",  outPath, args);
+
+            callNum.Should().BeGreaterThan(0);
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+            fastText.ModelPath.Should().Be(outPath + ".bin");
+
+            AssertLabels(fastText.GetLabels());
+
+            File.Exists(outPath + ".bin").Should().BeTrue();
+            File.Exists(outPath + ".vec").Should().BeTrue();
+        }
 
         [Fact]
         public void CantTrainSupervisedWithPretrainedVectorsWithDifferentDimension()
@@ -191,8 +219,7 @@ namespace UnitTests
             using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             
             string outPath = Path.Combine(_tempDir, "cooking");
-            var args = new SupervisedArgs();
-            args.PretrainedVectors = "cooking.unsup.300.vec";
+            var args = new SupervisedArgs {PretrainedVectors = "cooking.unsup.300.vec"};
 
             fastText.Invoking(x => x.Supervised("cooking.train.txt", outPath, args))
                 .Should().Throw<NativeLibraryException>()
@@ -319,6 +346,69 @@ namespace UnitTests
                 Metric = "precisionAtRecall:30",
                 Predictions = 2,
                 ValidationFile = "cooking.valid.txt"
+            };
+            
+            fastText.Supervised("cooking.train.txt",  outPath, args, autotuneArgs, true);
+            
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(250);
+            fastText.ModelPath.Should().Be(outPath + ".bin");
+            
+            File.Exists(outPath + ".bin").Should().BeTrue();
+            File.Exists(outPath + ".vec").Should().BeTrue();
+
+            var debugArgs = DebugArgs.Load("_train.txt");
+            
+            AssertSupervisedArgs(args, debugArgs.ExternalArgs);
+            AssertSupervisedArgs(args, debugArgs.ConvertedArgs);
+            AssertAutotuneArgs(autotuneArgs, debugArgs.ExternalTune);
+            AssertAutotuneArgs(autotuneArgs, debugArgs.ConvertedTune);
+
+            debugArgs.ExternalInput.Should().Be("cooking.train.txt");
+            debugArgs.ConvertedInput.Should().Be("cooking.train.txt");
+            debugArgs.ExternalOutput.Should().Be(outPath);
+            debugArgs.ConvertedOutput.Should().Be(outPath);
+        }
+        
+        [Fact]
+        public void CanAutotuneSupervisedModelWithProgressCallback()
+        {
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            string outPath = Path.Combine(_tempDir, "cooking");
+            int numCalls = 0;
+
+            var args = new SupervisedArgs
+            {
+                bucket = 2100000,
+                dim = 250,
+                epoch = 10,
+                loss = LossName.HierarchicalSoftmax,
+                lr = 0.5,
+                maxn = 5,
+                minn = 2,
+                neg = 6,
+                seed = 42,
+                t = 0.0002,
+                thread = 10,
+                verbose = 1,
+                ws = 6,
+                minCount = 2,
+                saveOutput = true,
+                wordNgrams = 2,
+                lrUpdateRate = 110,
+                minCountLabel = 1
+            };
+            
+            var autotuneArgs = new AutotuneArgs
+            {
+                Duration = 30,
+                Metric = "precisionAtRecall:30",
+                Predictions = 2,
+                ValidationFile = "cooking.valid.txt",
+                AutotuneProgressCallback = (progress, trials, score, eta) =>
+                {
+                    numCalls++;
+                }
             };
             
             fastText.Supervised("cooking.train.txt",  outPath, args, autotuneArgs, true);

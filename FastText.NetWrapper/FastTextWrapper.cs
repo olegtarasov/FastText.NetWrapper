@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http.Headers;
@@ -152,7 +153,7 @@ namespace FastText.NetWrapper
 		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
 		public void Supervised(string inputPath, string outputPath)
 		{
-			Supervised(inputPath, outputPath, new SupervisedArgs(), new AutotuneArgs());
+			Supervised(inputPath, outputPath, new SupervisedArgs(), new AutotuneArgs(), false);
 		}
 
 		/// <summary>
@@ -164,10 +165,11 @@ namespace FastText.NetWrapper
 		/// Training arguments. If <see cref="SupervisedArgs"/> is passed, a supervised model will be trained.
 		/// If <see cref="QuantizedSupervisedArgs"/> is passed, model will be quantized after training.
 		/// </param>
+		/// <param name="progressCallback">Optional progress callback.</param>
 		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
-		public void Supervised(string inputPath, string outputPath, SupervisedArgs args)
+		public void Supervised(string inputPath, string outputPath, SupervisedArgs args, TrainProgressCallback progressCallback = null)
 		{
-			Supervised(inputPath, outputPath, args, new AutotuneArgs());
+			Supervised(inputPath, outputPath, args, new AutotuneArgs(), false);
 		}
 
 		/// <summary>
@@ -181,8 +183,9 @@ namespace FastText.NetWrapper
 		/// If <see cref="QuantizedSupervisedArgs"/> is passed, model will be quantized after training.
 		/// </param>
 		/// <param name="autotuneArgs">Autotune arguments.</param>
+		/// <param name="progressCallback">Optional progress callback.</param>
 		/// <remarks>Trained model will consist of two files: .bin (main model) and .vec (word vectors).</remarks>
-		public void Supervised(string inputPath, string outputPath, SupervisedArgs args, AutotuneArgs autotuneArgs)
+		public void Supervised(string inputPath, string outputPath, SupervisedArgs args, AutotuneArgs autotuneArgs, TrainProgressCallback progressCallback = null)
 		{
 			Supervised(inputPath, outputPath, args, autotuneArgs, false);
 		}
@@ -226,7 +229,9 @@ namespace FastText.NetWrapper
 				inputPath, 
 				quantizeWithNoQuantTune ? null : outputPath, 
 				argsStruct, 
-				autotuneStruct, 
+				autotuneStruct,
+				args.TrainProgressCallback,
+				autotuneArgs.AutotuneProgressCallback,
 				args.LabelPrefix, 
 				args.PretrainedVectors, 
 				debug));
@@ -269,7 +274,7 @@ namespace FastText.NetWrapper
 			args.model = (ModelName)model;
 			
 			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
-			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, new AutotuneArgsStruct(), args.LabelPrefix, args.PretrainedVectors, false));
+			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, new AutotuneArgsStruct(), null, null, args.LabelPrefix, args.PretrainedVectors, false));
 			_maxLabelLen = 0;
 
 			ModelPath = AdjustPath(outputPath, false);
