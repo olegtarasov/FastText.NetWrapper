@@ -259,7 +259,7 @@ Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console(theme: ConsoleTheme.None)
                 .CreateLogger();
 
-var fastText = new FastTextWrapper(loggerFactory: new LoggerFactory(new[] {new SerilogLoggerProvider()}));
+var fastText = new FastTextWrapper(loggerFactory: new SerilogLoggerFactory());
 ```
 
 ### Handling native exceptions
