@@ -12,6 +12,10 @@ binary depending on target platform.
 
 ## What's new
 
+### `1.2.5`
+
+* Fixed progress callbacks for unsupervised model training.
+
 ### `1.2.4`
 
 * Added progress callbacks for model training and autotuning.

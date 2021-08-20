@@ -274,7 +274,17 @@ namespace FastText.NetWrapper
 			args.model = (ModelName)model;
 			
 			var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
-			CheckForErrors(Train(_fastText, inputPath, outputPath, argsStruct, new AutotuneArgsStruct(), null, null, args.LabelPrefix, args.PretrainedVectors, false));
+			CheckForErrors(Train(
+				_fastText, 
+				inputPath, 
+				outputPath, 
+				argsStruct, 
+				new AutotuneArgsStruct(), 
+				args.TrainProgressCallback, 
+				null, 
+				args.LabelPrefix, 
+				args.PretrainedVectors, 
+				false));
 			_maxLabelLen = 0;
 
 			ModelPath = AdjustPath(outputPath, false);

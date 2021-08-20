@@ -264,11 +264,65 @@ namespace UnitTests
         }
         
         [Fact]
+        public void CanTrainSkipgramWithProgressCallback()
+        {
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            string outPath = Path.Combine(_tempDir, "cooking");
+            int callNum = 0;
+
+            var args = new UnsupervisedArgs
+            {
+                TrainProgressCallback = (progress, loss, wst, lr, eta) =>
+                {
+                    callNum++;
+                }
+            };
+            
+            fastText.Unsupervised(UnsupervisedModel.SkipGram, "cooking.train.nolabels.txt",  outPath, args);
+
+            callNum.Should().BeGreaterThan(0);
+            
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+            fastText.ModelPath.Should().Be(outPath + ".bin");
+
+            File.Exists(outPath + ".bin").Should().BeTrue();
+            File.Exists(outPath + ".vec").Should().BeTrue();
+        }
+        
+        [Fact]
         public void CanTrainCbowModel()
         {
             using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
             string outPath = Path.Combine(_tempDir, "cooking");
             fastText.Unsupervised(UnsupervisedModel.CBow, "cooking.train.nolabels.txt",  outPath);
+
+            fastText.IsModelReady().Should().BeTrue();
+            fastText.GetModelDimension().Should().Be(100);
+            fastText.ModelPath.Should().Be(outPath + ".bin");
+
+            File.Exists(outPath + ".bin").Should().BeTrue();
+            File.Exists(outPath + ".vec").Should().BeTrue();
+        }
+        
+        [Fact]
+        public void CanTrainCbowWithProgressCallback()
+        {
+            using var fastText = new FastTextWrapper(loggerFactory: _loggerFactory);
+            string outPath = Path.Combine(_tempDir, "cooking");
+            int callNum = 0;
+            
+            var args = new UnsupervisedArgs
+            {
+                TrainProgressCallback = (progress, loss, wst, lr, eta) =>
+                {
+                    callNum++;
+                }
+            };
+            
+            fastText.Unsupervised(UnsupervisedModel.CBow, "cooking.train.nolabels.txt",  outPath, args);
+            
+            callNum.Should().BeGreaterThan(0);
 
             fastText.IsModelReady().Should().BeTrue();
             fastText.GetModelDimension().Should().Be(100);
