@@ -31,7 +31,36 @@ namespace FastText.NetWrapper
 		/// You can compile your own binary from this specific fork: https://github.com/olegtarasov/fastText.
 		/// </param>
 		/// <param name="loggerFactory">Optional logger factory.</param>
-		public FastTextWrapper(bool useBundledLibrary = true, ILoggerFactory loggerFactory = null)
+		public FastTextWrapper(ILoggerFactory loggerFactory = null)
+		{
+			_logger = loggerFactory?.CreateLogger<FastTextWrapper>();
+			
+			_mapper = new MapperConfiguration(config =>
+				{
+					config.ShouldMapProperty = prop => prop.GetMethod.IsPublic || prop.GetMethod.IsAssembly;
+					config.CreateMap<SupervisedArgs, FastTextArgsStruct>();
+					config.CreateMap<QuantizedSupervisedArgs, FastTextArgsStruct>();
+					config.CreateMap<UnsupervisedArgs, FastTextArgsStruct>();
+					config.CreateMap<AutotuneArgs, AutotuneArgsStruct>();
+				})
+				.CreateMapper();
+
+			_fastText = CreateFastText();
+		}
+		
+		/// <summary>
+		/// Ctor.
+		/// </summary>
+		/// <param name="useBundledLibrary">
+		/// If <code>true</code>, a bundled copy of fastText binary is extracted to process' current directory.
+		/// You can set this to <code>false</code>, but then you must ensure that a compatible binary for your
+		/// platform is discoverable by system library loader.
+		/// 
+		/// You can compile your own binary from this specific fork: https://github.com/olegtarasov/fastText.
+		/// </param>
+		/// <param name="loggerFactory">Optional logger factory.</param>
+		[Obsolete("Native libraries are no longer extracted from resources, so there is no need for useBundledLibrary argument.")]
+		public FastTextWrapper(bool useBundledLibrary, ILoggerFactory loggerFactory = null)
 		{
 			_logger = loggerFactory?.CreateLogger<FastTextWrapper>();
 			
