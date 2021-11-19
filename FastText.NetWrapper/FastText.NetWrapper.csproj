@@ -3,29 +3,27 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Title>FastText.NetWrapper</Title>
-    <Authors>Oleg Tarasov</Authors>
-    <Description>Crossplatform .NET wrapper for Facebook's FastText library. Works on Windows, Linux and MacOs!</Description>
-    <Copyright>Oleg Tarasov</Copyright>
-    <PackageProjectUrl>https://github.com/olegtarasov/FastText.NetWrapper</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/olegtarasov/FastText.NetWrapper</RepositoryUrl>
-    <PackageVersion>1.0.1</PackageVersion>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/olegtarasov/FastText.NetWrapper/master/LICENSE</PackageLicenseUrl>
-    <PackageReleaseNotes>Attention! We are deprecating some methods in 1.1 and replacing them with new API. Migration is really straightforward, but please be sure to read https://github.com/olegtarasov/FastText.NetWrapper/blob/master/README.md for guidance.</PackageReleaseNotes>
     <LangVersion>latest</LangVersion>
+    <NuspecFile>$(MSBuildThisFileDirectory)$(MSBuildProjectName).nuspec</NuspecFile>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DocumentationFile>bin\Release\FastText.NetWrapper.xml</DocumentationFile>
   </PropertyGroup>
-
+  
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="10.0.0" />
-    <PackageReference Include="FastText.Native.Linux" Version="1.0.110" />
-    <PackageReference Include="FastText.Native.MacOs" Version="1.0.110" />
-    <PackageReference Include="FastText.Native.Windows" Version="1.0.110" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.5" />
-    <PackageReference Include="NativeLibraryManager" Version="1.0.23" />
+    <PackageReference Include="AutoMapper" Version="10.1.1" />
+    <PackageReference Include="FastText.Native.Linux" Version="1.0.113" />
+    <PackageReference Include="FastText.Native.MacOs" Version="1.0.113" />
+    <PackageReference Include="FastText.Native.Windows" Version="1.0.113" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
   </ItemGroup>
 
+  <Target Name="SetNuspecProperties" BeforeTargets="GenerateNuspec">
+    <PropertyGroup>
+      <NuspecProperties>$(NuspecProperties);assemblyName=$(AssemblyName)</NuspecProperties>
+      <NuspecProperties>$(NuspecProperties);config=$(Configuration)</NuspecProperties>
+      <NuspecProperties>$(NuspecProperties);version=$(PackageVersion)</NuspecProperties>
+    </PropertyGroup>
+  </Target>
 </Project>

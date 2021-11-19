@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
-using NativeLibraryManager;
 
 namespace FastText.NetWrapper
 {
@@ -39,21 +34,6 @@ namespace FastText.NetWrapper
 		public FastTextWrapper(bool useBundledLibrary = true, ILoggerFactory loggerFactory = null)
 		{
 			_logger = loggerFactory?.CreateLogger<FastTextWrapper>();
-			
-			if (useBundledLibrary)
-			{
-				var accessor = new ResourceAccessor(Assembly.GetExecutingAssembly());
-				var manager = new LibraryManager(
-					loggerFactory,
-					new LibraryItem(Platform.Windows, Bitness.x64,
-						new LibraryFile("fasttext.dll", accessor.Binary("Resources.fasttext.dll"))),
-					new LibraryItem(Platform.MacOs, Bitness.x64,
-						new LibraryFile("libfasttext.dylib", accessor.Binary("Resources.libfasttext.dylib"))),
-					new LibraryItem(Platform.Linux, Bitness.x64,
-						new LibraryFile("libfasttext.so", accessor.Binary("Resources.libfasttext.so"))));
-
-				manager.LoadNativeLibrary();
-			}
 			
 			_mapper = new MapperConfiguration(config =>
 				{
