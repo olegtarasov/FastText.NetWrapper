@@ -13,12 +13,8 @@
     <repository url="https://github.com/olegtarasov/FastText.NetWrapper" />
     <dependencies>
       <group targetFramework=".NETStandard2.0">
-        <dependency id="AutoMapper" version="10.0.0" exclude="Build,Analyzers" />
-        <dependency id="FastText.Native.Linux" version="1.10.111-pre" exclude="Build,Analyzers" />
-        <dependency id="FastText.Native.MacOs" version="1.10.111-pre" exclude="Build,Analyzers" />
-        <dependency id="FastText.Native.Windows" version="1.10.113-pre" exclude="Build,Analyzers" />
-        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="3.1.5" exclude="Build,Analyzers" />
-        <dependency id="NativeLibraryManager" version="1.0.23" exclude="Build,Analyzers" />
+        <dependency id="AutoMapper" version="10.1.1" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="6.0.0" exclude="Build,Analyzers" />
       </group>
     </dependencies>
     <contentFiles>
