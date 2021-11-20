@@ -18,7 +18,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 5.0.101
+          dotnet-version: 6.0.100
 
       - name: Run tests
         run: dotnet test
@@ -33,7 +33,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 5.0.101
+          dotnet-version: 6.0.100
           
       - name: Create the package
         run: dotnet pack FastText.NetWrapper --configuration Release -p:PackageVersion=$GIT_TAG_NAME -o .
