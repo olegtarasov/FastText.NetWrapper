@@ -12,6 +12,12 @@ binary depending on target platform.
 
 ## What's new
 
+### `1.3.0`
+
+* Native libraries are now explicitly included in target project and copied to output directory. Hopefully, 
+this solves a couple of problems with the previous approach of dynamically extracting libraries from
+resources.
+
 ### `1.2.5`
 
 * Fixed progress callbacks for unsupervised model training.

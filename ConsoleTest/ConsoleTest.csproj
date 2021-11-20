@@ -26,7 +26,7 @@
       <PackageReference Include="OxyPlot.Core" Version="2.1.0" />
       <PackageReference Include="Serilog.Extensions.Logging" Version="3.1.0" />
       <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
-      <PackageReference Include="ShellProgressBar" Version="5.1.0" />
+      <PackageReference Include="Spectre.Console" Version="0.42.0" />
     </ItemGroup>
     
 </Project>

@@ -21,13 +21,6 @@ public partial class FastTextWrapper : IDisposable
 	/// <summary>
 	/// Ctor.
 	/// </summary>
-	/// <param name="useBundledLibrary">
-	/// If <code>true</code>, a bundled copy of fastText binary is extracted to process' current directory.
-	/// You can set this to <code>false</code>, but then you must ensure that a compatible binary for your
-	/// platform is discoverable by system library loader.
-	/// 
-	/// You can compile your own binary from this specific fork: https://github.com/olegtarasov/fastText.
-	/// </param>
 	/// <param name="loggerFactory">Optional logger factory.</param>
 	public FastTextWrapper(ILoggerFactory loggerFactory = null)
 	{

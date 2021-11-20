@@ -6,7 +6,7 @@ using OxyPlot.Series;
 using Serilog;
 using Serilog.Extensions.Logging;
 using Serilog.Sinks.SystemConsole.Themes;
-using ShellProgressBar;
+using Spectre.Console;
 
 namespace ConsoleTest;
 
@@ -28,25 +28,28 @@ class Program
         string outPath = Path.Combine(tempDir, "cooking.bin");
         var fastText = new FastTextWrapper(loggerFactory: new LoggerFactory(new[] {new SerilogLoggerProvider()}));
 
-        using (var pBar = new ProgressBar(100, "Training"))
-        {
-            var ftArgs = new SupervisedArgs
+        AnsiConsole.Progress()
+            .Start(ctx =>
             {
-                epoch = 15,
-                lr = 1,
-                dim = 300,
-                wordNgrams = 2,
-                minn = 3,
-                maxn = 6,
-                verbose = 0,
-                TrainProgressCallback = (progress, loss, wst, lr, eta) =>
+                var task = ctx.AddTask("Training");
+                var ftArgs = new SupervisedArgs
                 {
-                    pBar.Tick((int)Math.Ceiling(progress * 100), $"Loss: {loss:N3}, words/thread/sec: {wst}, LR: {lr:N5}, ETA: {eta}");
-                }
-            };
+                    epoch = 15,
+                    lr = 1,
+                    dim = 300,
+                    wordNgrams = 2,
+                    minn = 3,
+                    maxn = 6,
+                    verbose = 0,
+                    TrainProgressCallback = (progress, loss, wst, lr, eta) =>
+                    {
+                        task.Value = Math.Ceiling(progress * 100);
+                        task.Description = $"Loss: {loss:N3}, words/thread/sec: {wst}, LR: {lr:N5}, ETA: {eta}";
+                    }
+                };
 
-            fastText.Supervised("cooking.train.txt", outPath, ftArgs);
-        }
+                fastText.Supervised("cooking.train.txt", outPath, ftArgs);
+            });
 
         try
         {
