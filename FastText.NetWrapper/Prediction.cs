@@ -1,30 +1,29 @@
 ﻿using System.Diagnostics;
 
-namespace FastText.NetWrapper
+namespace FastText.NetWrapper;
+
+/// <summary>
+/// Represents a single label prediction.
+/// </summary>
+[DebuggerDisplay("{Label} ({Probability})")]
+public struct Prediction
 {
     /// <summary>
-    /// Represents a single label prediction.
+    /// Label probability.
     /// </summary>
-    [DebuggerDisplay("{Label} ({Probability})")]
-    public struct Prediction
+    public readonly float Probability;
+
+    /// <summary>
+    /// Label text.
+    /// </summary>
+    public readonly string Label;
+
+    /// <summary>
+    /// Ctor.
+    /// </summary>
+    public Prediction(float probability, string label)
     {
-        /// <summary>
-        /// Label probability.
-        /// </summary>
-        public readonly float Probability;
-
-        /// <summary>
-        /// Label text.
-        /// </summary>
-        public readonly string Label;
-
-        /// <summary>
-        /// Ctor.
-        /// </summary>
-        public Prediction(float probability, string label)
-        {
-            Probability = probability;
-            Label = label;
-        }
+        Probability = probability;
+        Label = label;
     }
 }

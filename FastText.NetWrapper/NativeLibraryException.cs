@@ -1,15 +1,14 @@
 using System;
 
-namespace FastText.NetWrapper
-{
-    public class NativeLibraryException : Exception
-    {
-        public NativeLibraryException()
-        {
-        }
+namespace FastText.NetWrapper;
 
-        public NativeLibraryException(string message) : base(message)
-        {
-        }
+public class NativeLibraryException : Exception
+{
+    public NativeLibraryException()
+    {
+    }
+
+    public NativeLibraryException(string message) : base(message)
+    {
     }
 }
