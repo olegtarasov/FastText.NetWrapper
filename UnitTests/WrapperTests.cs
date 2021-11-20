@@ -1,13 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using FastText.NetWrapper;
 using FluentAssertions;
 using MartinCostello.Logging.XUnit;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Xunit;
 using Xunit.Abstractions;
 using TestResult = FastText.NetWrapper.TestResult;

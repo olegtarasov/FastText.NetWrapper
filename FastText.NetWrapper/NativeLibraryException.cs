@@ -1,5 +1,3 @@
-using System;
-
 namespace FastText.NetWrapper;
 
 public class NativeLibraryException : Exception

@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using FastText.NetWrapper;
+﻿using FastText.NetWrapper;
 using Microsoft.Extensions.Logging;
 using OxyPlot;
 using OxyPlot.Axes;
