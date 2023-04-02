@@ -1,4 +1,4 @@
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/olegtarasov/FastText.NetWrapper/Build%20and%20publish?style=flat-square)](https://github.com/olegtarasov/FastText.NetWrapper/actions)
+[![Build status](https://github.com/olegtarasov/FastText.NetWrapper/actions/workflows/BuildAndPublish.yml/badge.svg)](https://github.com/olegtarasov/FastText.NetWrapper/actions)
 [![Nuget](https://img.shields.io/nuget/v/FastText.NetWrapper?style=flat-square)](https://www.nuget.org/packages/FastText.NetWrapper)
 [![Donwloads](https://img.shields.io/nuget/dt/FastText.NetWrapper?label=Nuget&style=flat-square)](https://www.nuget.org/packages/FastText.NetWrapper)
 
@@ -10,64 +10,10 @@ The wrapper comes with bundled precompiled native binaries for all three platfor
 Just add it to your project and start using it! No additional setup required. This library will unpack and call appropriate native 
 binary depending on target platform.
 
-## What's new
+## Is this project dead or abandoned?
 
-### `1.3.0`
-
-* Native libraries are now explicitly included in target project and copied to output directory. Hopefully, 
-this solves a couple of problems with the previous approach of dynamically extracting libraries from
-resources.
-
-### `1.2.5`
-
-* Fixed progress callbacks for unsupervised model training.
-
-### `1.2.4`
-
-* Added progress callbacks for model training and autotuning.
-
-### `1.2.3`
-
-* Added supervised model quantization with `Quantize` method.
-* Stable version released! 🎉
-
-### `1.2.2-preview`
-
-* Merged #20 with new `GetWordVector` method.
-
-### `1.2.1-preview`
-
-* Added model autotuning with quantization support.
-* Fixed a horrible bug with `bool` marshalling.
-
-### `1.2.0-preview`
-
-Version 1.2.0 introduces a few breaking changes to library API. If you are not ready to migrate, use v. `1.1.2`.
-
-* **❗️Breaking change:️** Removed both deprecated `Train()` methods.
-* **❗️Breaking change:️** Removed deprecated `SupervisedArgs` class.
-* **❗️Breaking change:️** Removed `FastTextArgs.SupervisedDefaults()` in favor of new `SupervisedArgs` with default constructor.
-* **❗️Breaking change:️** `FastTextArgs` class can't be constructed directly, use new `SupervisedArgs` and `UnsupervisedArgs` classes.
-* Added an `Unsupervised()` method to train Skipgram or Cbow models.
-
-### `1.1.2`
-
-* Fixed a horrible bug with `bool` marshalling on a `1.1.*` branch.
-
-### `1.1.0`, `1.1.1`
-
-* Added new `Supervised()` method as part of streamlining the API.
-* Added new `Test()` method for testing supervised model.
-* Deprecated both `Train()` methods. They will be removed in v. `1.2.0`.
-
-### `1.0.38`
-
-* Fixed a horrible bug with `bool` marshalling on a `1.0.*` branch.
-
-## Version `1.2.0` migration guide
-
-* Instead of old `Train()` methods use `Supervised()` and `Unsupervised()` methods.
-* Instead of `FastTextArgs.SupervisedDefaults()` use `SupervisedArgs` or `Supervised()` overload with 2 arguments.
+Of course not! It's just complete :) There are no major updates for fastText, and most bugs in this repository are fixed. All the features
+should work and if something doesn't — just ping me with an issue and I will try to get back to you.
 
 ## Usage
 
@@ -108,6 +54,10 @@ fastText.LoadModel("model.bin");
 
 To use pretrained vectors for your supervised model, create an instance of `SupervisedArgs` and customize it:
 
+**❗ Important ❗** It doesn't say this anywhere in the original documentation, but you must use preterained vectors in **text** format
+(`.vec` file extension), and not in binary format. If you try to use binary vectors, you will get an error about your vectors having
+the dimension 0.
+
 ```c#
 var fastText = new FastTextWrapper();
             
@@ -122,7 +72,7 @@ fastText.Supervised("cooking.train.txt", "cooking", args);
 
 Here we get default training arguments, supply a path to pretrained vectors file and adjust vector dimension accordingly.
 
-**Important!** Be sure to always check the dimension of your pretrained vectors! Many vectors on the internet have dimension `300`,
+**❗ Important ❗** Be sure to always check the dimension of your pretrained vectors! Many vectors on the internet have dimension `300`,
 but default dimension for fastText supervised model training is `100`.
 
 ### Testing the model
@@ -286,3 +236,62 @@ and select the appropriate redistributable.
 ## FastText C-style API
 
 If you are interested in using FastText with C-style API, here is my fork of the official library: https://github.com/olegtarasov/fastText.
+
+## Changelog
+
+### `1.3.0`
+
+* Native libraries are now explicitly included in target project and copied to output directory. Hopefully, 
+this solves a couple of problems with the previous approach of dynamically extracting libraries from
+resources.
+
+### `1.2.5`
+
+* Fixed progress callbacks for unsupervised model training.
+
+### `1.2.4`
+
+* Added progress callbacks for model training and autotuning.
+
+### `1.2.3`
+
+* Added supervised model quantization with `Quantize` method.
+* Stable version released! 🎉
+
+### `1.2.2-preview`
+
+* Merged #20 with new `GetWordVector` method.
+
+### `1.2.1-preview`
+
+* Added model autotuning with quantization support.
+* Fixed a horrible bug with `bool` marshalling.
+
+### `1.2.0-preview`
+
+Version 1.2.0 introduces a few breaking changes to library API. If you are not ready to migrate, use v. `1.1.2`.
+
+* **❗️Breaking change:️** Removed both deprecated `Train()` methods.
+* **❗️Breaking change:️** Removed deprecated `SupervisedArgs` class.
+* **❗️Breaking change:️** Removed `FastTextArgs.SupervisedDefaults()` in favor of new `SupervisedArgs` with default constructor.
+* **❗️Breaking change:️** `FastTextArgs` class can't be constructed directly, use new `SupervisedArgs` and `UnsupervisedArgs` classes.
+* Added an `Unsupervised()` method to train Skipgram or Cbow models.
+
+### `1.1.2`
+
+* Fixed a horrible bug with `bool` marshalling on a `1.1.*` branch.
+
+### `1.1.0`, `1.1.1`
+
+* Added new `Supervised()` method as part of streamlining the API.
+* Added new `Test()` method for testing supervised model.
+* Deprecated both `Train()` methods. They will be removed in v. `1.2.0`.
+
+### `1.0.38`
+
+* Fixed a horrible bug with `bool` marshalling on a `1.0.*` branch.
+
+## Version `1.2.0` migration guide
+
+* Instead of old `Train()` methods use `Supervised()` and `Unsupervised()` methods.
+* Instead of `FastTextArgs.SupervisedDefaults()` use `SupervisedArgs` or `Supervised()` overload with 2 arguments.
