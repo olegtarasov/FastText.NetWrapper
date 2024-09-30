@@ -4,15 +4,15 @@
 
 # FastText.NetWrapper
 
-This is a cross-platform .NET Standard wrapper for Facebook's [FastText](https://github.com/facebookresearch/fastText) library. 
+This is a cross-platform .NET Standard wrapper for Facebook's [FastText](https://github.com/facebookresearch/fastText) library.
 The wrapper comes with bundled precompiled native binaries for all three platforms: Windows, Linux and MacOs.
 
-Just add it to your project and start using it! No additional setup required. This library will unpack and call appropriate native 
+Just add it to your project and start using it! No additional setup required. This library will unpack and call appropriate native
 binary depending on target platform.
 
 ## Is this project dead or abandoned?
 
-Of course not! It's just complete :) There are no major updates for fastText, and most bugs in this repository are fixed. All the features
+Of course not! It's just complete :) There are no major updates for fastText, and most bugs in this repository are fixed. All features
 should work and if something doesn't — just ping me with an issue and I will try to get back to you.
 
 ## Usage
@@ -34,7 +34,7 @@ Note the arguments:
 https://dl.fbaipublicfiles.com/fasttext/data/cooking.stackexchange.tar.gz. You can find extracted files split into training
 and validation sets in `UnitTests` directory in this repository.
 2. Your model will be saved to `cooking.bin` and `cooking.vec` with pretrained vectors will be placed if the same directory.
-3. Here we use `Supervised()` overload with 2 arguments. This means that training will be done with default parameters. 
+3. Here we use `Supervised()` overload with 2 arguments. This means that training will be done with default parameters.
 It's a good starting point and is the same as calling fastText this way:
 
 ```bash
@@ -60,7 +60,7 @@ the dimension 0.
 
 ```c#
 var fastText = new FastTextWrapper();
-            
+
 var args = new SupervisedArgs
 {
     PretrainedVectors = "cooking.unsup.300.vec",
@@ -113,7 +113,7 @@ var plotModel = new PlotModel
 
 using (var stream = new FileStream("precision-recall.svg", FileMode.Create, FileAccess.Write))
 {
-    SvgExporter.Export(plotModel, stream, 600, 600, false);   
+    SvgExporter.Export(plotModel, stream, 600, 600, false);
 }
 ```
 
@@ -163,7 +163,7 @@ var autotuneArgs = new AutotuneArgs
     Duration = 30, // in seconds
     Metric = "precisionAtRecall:30", // supports custom metrics
     Predictions = 2, // Supports @k predictions
-    ModelSize = "10M", // Set this to train a quantized model and do an 
+    ModelSize = "10M", // Set this to train a quantized model and do an
                        // additional quantization hyperparameter search. Requires QuantizedSupervisedArgs.
     ValidationFile = "cooking.valid.txt" // REQUIRED: path to a validation file
 };
@@ -212,7 +212,7 @@ You can also inject your standard `IloggerFactory` through .NET Core DI.
 ```c#
 // Add the following Nuget packages to your project:
 // * Serilog.Sinks.Console
-// * Serilog.Extensions.Logging 
+// * Serilog.Extensions.Logging
 
 Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
@@ -229,9 +229,9 @@ In version `1.1` I've added much better native error handling. Now in case of mo
 
 ## Windows Requirements
 
-Since this wrapper uses native C++ binaries under the hood, you will need to have Visual C++ Runtime Version 140 installed when 
-running under Windows. Visit the MS Downloads page (https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads) 
-and select the appropriate redistributable. 
+Since this wrapper uses native C++ binaries under the hood, you will need to have Visual C++ Runtime Version 140 installed when
+running under Windows. Visit the MS Downloads page (https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads)
+and select the appropriate redistributable.
 
 ## FastText C-style API
 
@@ -239,9 +239,13 @@ If you are interested in using FastText with C-style API, here is my fork of the
 
 ## Changelog
 
+### `1.3.1`
+
+* Updated fastText binaries with latest improvements from the Facebook repo.
+
 ### `1.3.0`
 
-* Native libraries are now explicitly included in target project and copied to output directory. Hopefully, 
+* Native libraries are now explicitly included in target project and copied to output directory. Hopefully,
 this solves a couple of problems with the previous approach of dynamically extracting libraries from
 resources.
 
