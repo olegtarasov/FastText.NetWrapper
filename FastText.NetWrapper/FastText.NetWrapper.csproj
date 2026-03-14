@@ -13,11 +13,11 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="10.1.1" />
+    <PackageReference Include="AutoMapper" Version="16.1.1" />
     <PackageReference Include="FastText.Native.Linux" Version="1.0.115" />
     <PackageReference Include="FastText.Native.MacOs" Version="1.0.115" />
     <PackageReference Include="FastText.Native.Windows" Version="1.0.115" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
   </ItemGroup>
 
   <Target Name="SetNuspecProperties" BeforeTargets="GenerateNuspec">
