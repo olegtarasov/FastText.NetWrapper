@@ -1,5 +1,4 @@
 ﻿using System.Runtime.InteropServices;
-using AutoMapper;
 
 namespace FastText.NetWrapper;
 
@@ -40,8 +39,8 @@ public class QuantizedSupervisedArgs : SupervisedArgs
         FastTextWrapper.FastTextArgsStruct* argsPtr;
 
         GetDefaultSupervisedArgs(new IntPtr(&argsPtr));
-            
-        Mapper.Map(*argsPtr, this);
+
+        MapFromStruct(*argsPtr);
             
         DestroyArgs(new IntPtr(argsPtr));
     }
@@ -87,7 +86,7 @@ public class SupervisedArgs : FastTextArgs
 
         GetDefaultSupervisedArgs(new IntPtr(&argsPtr));
             
-        Mapper.Map(*argsPtr, this);
+        MapFromStruct(*argsPtr);
             
         DestroyArgs(new IntPtr(argsPtr));
     } 
@@ -120,20 +119,6 @@ public abstract class FastTextArgs
 
     #endregion
 
-    protected static readonly IMapper Mapper;
-
-    static FastTextArgs()
-    {
-        Mapper = new MapperConfiguration(config =>
-        {
-            config.ShouldMapProperty = prop => prop.GetMethod.IsPublic || prop.GetMethod.IsAssembly;
-            config.CreateMap<FastTextWrapper.FastTextArgsStruct, FastTextArgs>();
-            config.CreateMap<FastTextWrapper.FastTextArgsStruct, SupervisedArgs>();
-            config.CreateMap<FastTextWrapper.FastTextArgsStruct, UnsupervisedArgs>();
-            config.CreateMap<FastTextWrapper.FastTextArgsStruct, QuantizedSupervisedArgs>();
-        }).CreateMapper();
-    }
-        
     /// <summary>
     /// This constructor gets values from
     /// https://github.com/olegtarasov/fastText/blob/b0a32d744f4d16d8f9834649f6f178ff79b5a4ce/src/fasttext_api.cc#L12
@@ -146,9 +131,41 @@ public abstract class FastTextArgs
 
         GetDefaultArgs(new IntPtr(&argsPtr));
 
-        Mapper.Map(*argsPtr, this);
+        MapFromStruct(*argsPtr);
             
         DestroyArgs(new IntPtr(argsPtr));
+    }
+
+    protected void MapFromStruct(FastTextWrapper.FastTextArgsStruct argsStruct)
+    {
+        lr = argsStruct.lr;
+        lrUpdateRate = argsStruct.lrUpdateRate;
+        dim = argsStruct.dim;
+        ws = argsStruct.ws;
+        epoch = argsStruct.epoch;
+        minCount = argsStruct.minCount;
+        minCountLabel = argsStruct.minCountLabel;
+        neg = argsStruct.neg;
+        wordNgrams = argsStruct.wordNgrams;
+        loss = (LossName)argsStruct.loss;
+        model = (ModelName)argsStruct.model;
+        bucket = argsStruct.bucket;
+        minn = argsStruct.minn;
+        maxn = argsStruct.maxn;
+        thread = argsStruct.thread;
+        t = argsStruct.t;
+        verbose = argsStruct.verbose;
+        saveOutput = argsStruct.saveOutput;
+        seed = argsStruct.seed;
+
+        if (this is QuantizedSupervisedArgs quantized)
+        {
+            quantized.qout = argsStruct.qout;
+            quantized.retrain = argsStruct.retrain;
+            quantized.qnorm = argsStruct.qnorm;
+            quantized.cutoff = argsStruct.cutoff;
+            quantized.dsub = argsStruct.dsub;
+        }
     }
 
     /// <summary>

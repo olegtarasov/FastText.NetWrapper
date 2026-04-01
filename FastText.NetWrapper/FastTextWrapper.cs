@@ -1,6 +1,5 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text;
-using AutoMapper;
 using Microsoft.Extensions.Logging;
 
 namespace FastText.NetWrapper;
@@ -12,7 +11,6 @@ public partial class FastTextWrapper : IDisposable
 {
 	private static readonly Encoding _utf8 = Encoding.UTF8;
 
-	private readonly IMapper _mapper;
 	private readonly ILogger<FastTextWrapper> _logger;
 		
 	private IntPtr _fastText;
@@ -25,17 +23,6 @@ public partial class FastTextWrapper : IDisposable
 	public FastTextWrapper(ILoggerFactory loggerFactory = null)
 	{
 		_logger = loggerFactory?.CreateLogger<FastTextWrapper>();
-			
-		_mapper = new MapperConfiguration(config =>
-			{
-				config.ShouldMapProperty = prop => prop.GetMethod.IsPublic || prop.GetMethod.IsAssembly;
-				config.CreateMap<SupervisedArgs, FastTextArgsStruct>();
-				config.CreateMap<QuantizedSupervisedArgs, FastTextArgsStruct>();
-				config.CreateMap<UnsupervisedArgs, FastTextArgsStruct>();
-				config.CreateMap<AutotuneArgs, AutotuneArgsStruct>();
-			})
-			.CreateMapper();
-
 		_fastText = CreateFastText();
 	}
 		
@@ -54,17 +41,6 @@ public partial class FastTextWrapper : IDisposable
 	public FastTextWrapper(bool useBundledLibrary, ILoggerFactory loggerFactory = null)
 	{
 		_logger = loggerFactory?.CreateLogger<FastTextWrapper>();
-			
-		_mapper = new MapperConfiguration(config =>
-			{
-				config.ShouldMapProperty = prop => prop.GetMethod.IsPublic || prop.GetMethod.IsAssembly;
-				config.CreateMap<SupervisedArgs, FastTextArgsStruct>();
-				config.CreateMap<QuantizedSupervisedArgs, FastTextArgsStruct>();
-				config.CreateMap<UnsupervisedArgs, FastTextArgsStruct>();
-				config.CreateMap<AutotuneArgs, AutotuneArgsStruct>();
-			})
-			.CreateMapper();
-
 		_fastText = CreateFastText();
 	}
 
@@ -220,10 +196,10 @@ public partial class FastTextWrapper : IDisposable
 
 		bool quantizeWithNoQuantTune = quantizedArgs != null && string.IsNullOrEmpty(autotuneArgs.ModelSize);
 
-		var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
+		var argsStruct = ToArgsStruct(args);
 		argsStruct.model = model_name.sup;
 
-		var autotuneStruct = _mapper.Map<AutotuneArgsStruct>(autotuneArgs);
+		var autotuneStruct = ToAutotuneArgsStruct(autotuneArgs);
 		CheckForErrors(Train(
 			_fastText, 
 			inputPath, 
@@ -273,7 +249,7 @@ public partial class FastTextWrapper : IDisposable
 
 		args.model = (ModelName)model;
 			
-		var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
+		var argsStruct = ToArgsStruct(args);
 		CheckForErrors(Train(
 			_fastText, 
 			inputPath, 
@@ -305,7 +281,7 @@ public partial class FastTextWrapper : IDisposable
 		if (string.IsNullOrEmpty(ModelPath) && string.IsNullOrEmpty(output))
 			throw new InvalidOperationException("Model was loaded from memory. You need to specify output path.");
 
-		var argsStruct = _mapper.Map<FastTextArgsStruct>(args);
+		var argsStruct = ToArgsStruct(args);
 		string outPath = AdjustPath(string.IsNullOrEmpty(output) ? ModelPath : output, true);
 			
 		if ((Path.IsPathRooted(output) && !Directory.Exists(Path.GetDirectoryName(outPath))))
@@ -500,6 +476,56 @@ public partial class FastTextWrapper : IDisposable
 
 		DestroyFastText(_fastText);
 		_fastText = IntPtr.Zero;
+	}
+
+	private static FastTextArgsStruct ToArgsStruct(FastTextArgs args)
+	{
+		var result = new FastTextArgsStruct
+		{
+			lr = args.lr,
+			lrUpdateRate = args.lrUpdateRate,
+			dim = args.dim,
+			ws = args.ws,
+			epoch = args.epoch,
+			minCount = args.minCount,
+			minCountLabel = args.minCountLabel,
+			neg = args.neg,
+			wordNgrams = args.wordNgrams,
+			loss = (loss_name)args.loss,
+			model = (model_name)args.model,
+			bucket = args.bucket,
+			minn = args.minn,
+			maxn = args.maxn,
+			thread = args.thread,
+			t = args.t,
+			verbose = args.verbose,
+			saveOutput = args.saveOutput,
+			seed = args.seed
+		};
+
+		if (args is QuantizedSupervisedArgs quantized)
+		{
+			result.qout = quantized.qout;
+			result.retrain = quantized.retrain;
+			result.qnorm = quantized.qnorm;
+			result.cutoff = quantized.cutoff;
+			result.dsub = quantized.dsub;
+		}
+
+		return result;
+	}
+
+	private static AutotuneArgsStruct ToAutotuneArgsStruct(AutotuneArgs args)
+	{
+		return new AutotuneArgsStruct
+		{
+			ValidationFile = args.ValidationFile,
+			Metric = args.Metric,
+			Predictions = args.Predictions,
+			Duration = args.Duration,
+			ModelSize = args.ModelSize,
+			Verbose = args.Verbose
+		};
 	}
 
 	private string AdjustPath(string path, bool isQuantized)

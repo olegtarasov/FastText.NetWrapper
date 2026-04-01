@@ -13,7 +13,6 @@
     <repository url="https://github.com/olegtarasov/FastText.NetWrapper" />
     <dependencies>
       <group targetFramework=".NETStandard2.0">
-        <dependency id="AutoMapper" version="10.1.1" />
         <dependency id="FastText.Native.Linux" version="1.0.115" />
         <dependency id="FastText.Native.MacOs" version="1.0.115" />
         <dependency id="FastText.Native.Windows" version="1.0.115" />
